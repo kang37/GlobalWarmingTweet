@@ -1,8 +1,14 @@
+# install mecab in cmd
+# brew install mecab
+# brew install mecab-ipadic
+
+# install the required packages 
+
 library(readr)
 library(RMeCab)
 library(ggplot2)
 
-Sys.setlocale("LC_ALL", "japanese")
+Sys.setlocale("LC_ALL", "Japanese")
 
 # 读取原始数据并筛出子集以测试代码
 twtdata <- read_csv("jst201909lite.csv")
