@@ -10,7 +10,10 @@ library(ggplot2)
 
 if (.Platform$OS.type == "windows") {
   Sys.setlocale("LC_ALL", "Japanese")
-} 
+  userdic <- "C:/data/kangdict.dic"
+} else {
+  userdic <- "/Users/VickyWang/kang.dic"
+}
 
 # 读取原始数据并筛出子集以测试代码
 twtdata <- read_csv("jst201909lite.csv")
@@ -32,12 +35,12 @@ write(twtdata_sub$text, "twt.txt")
 
 # 提取词频
 start <- Sys.time()
-freq_ori <- docDF("twt.txt", type = 1, dic = "C:/data/kangdict.dic")
+freq_ori <- docDF("twt.txt", type = 1, dic = userdic)
 Sys.time() - start
 
 # 方法二：直接分析数据对象 ----
 start <- Sys.time()
-freq_ori_2 <- docDF(twtdata_sub, column = "text", type = 1, dic = "C:/data/kangdict.dic")
+freq_ori_2 <- docDF(twtdata_sub, column = "text", type = 1, dic = userdic)
 Sys.time() - start
 
 # 对比两者是否相同
@@ -61,7 +64,7 @@ freq <- freq[order(freq$twt.txt, decreasing = TRUE), ]
 head(freq)
 
 # 条形图
-ggplot(head(freq, 30), aes(x = reorder(TERM, twt.txt), y = twt.txt)) + 
+ggplot(head(freq, 10), aes(x = reorder(TERM, twt.txt), y = twt.txt)) + 
   geom_bar(stat = "identity") +
   coord_flip()
 
@@ -77,7 +80,7 @@ library(ggraph)
 # 只选取三类词性
 # 问题：有些不需要的字符没有清理干净，影响共现判断
 ngram <- docDF("twt.txt", type = 1, pos = c("名詞", "形容詞", "動詞"), 
-               nDF = 1, N = 2, dic = "C:/data/kangdict.dic")
+               nDF = 1, N = 2, dic = userdic)
 dim(ngram)
 # 查看各种词汇共现出现的次数
 table(ngram$twt.txt)
