@@ -12,7 +12,7 @@ Sys.setlocale("LC_ALL", "Japanese")
 
 # 读取原始数据并筛出子集以测试代码
 twtdata <- read_csv("jst201909lite.csv")
-twtdata_sub <- twtdata
+twtdata_sub <- head(twtdata, 2000)
 twtdata_sub
 
 # 清洗推文数据
@@ -24,6 +24,7 @@ twtdata_sub$text <- gsub("#\\w+", "", twtdata_sub$text)
 twtdata_sub$text <- gsub("[[:punct:]]", " ", twtdata_sub$text)
 twtdata_sub$text <- gsub("[0-9]", "", twtdata_sub$text)
 
+# 方法一：写入文件再分析文件 ----
 # 将推文写入文件
 write(twtdata_sub$text, "twt.txt")
 
@@ -31,6 +32,14 @@ write(twtdata_sub$text, "twt.txt")
 start <- Sys.time()
 freq_ori <- docDF("twt.txt", type = 1, dic = "C:/data/kangdict.dic")
 Sys.time() - start
+
+# 方法二：直接分析数据对象 ----
+start <- Sys.time()
+freq_ori_2 <- docDF(twtdata_sub, column = "text", type = 1, dic = "C:/data/kangdict.dic")
+Sys.time() - start
+
+# 对比两者是否相同
+identical(freq_ori, freq_ori_2)
 
 # 进一步清除停止词
 stopwords <- c("する","それ","なる","ない","そこ","これ","ある", 
