@@ -8,7 +8,9 @@ library(readr)
 library(RMeCab)
 library(ggplot2)
 
-Sys.setlocale("LC_ALL", "Japanese")
+if (.Platform$OS.type == "windows") {
+  Sys.setlocale("LC_ALL", "Japanese")
+} 
 
 # 读取原始数据并筛出子集以测试代码
 twtdata <- read_csv("jst201909lite.csv")
