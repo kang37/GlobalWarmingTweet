@@ -72,6 +72,9 @@ library(ggraph)
 # 问题：有些不需要的字符没有清理干净，影响共现判断
 ngram <- docDF("twt.txt", type = 1, pos = c("名詞", "形容詞", "動詞"), 
                nDF = 1, N = 2, dic = userdic)
+# 进一步去除停用词
+ngram <- ngram[!ngram$N1 %in% stopwords, ]
+ngram <- ngram[!ngram$N2 %in% stopwords, ]
 dim(ngram)
 # 查看各种词汇共现出现的次数
 table(ngram$twt.txt)
