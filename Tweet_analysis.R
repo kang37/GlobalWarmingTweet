@@ -10,24 +10,9 @@ library(ggplot2)
 library(igraph)
 library(ggraph)
 
-# 设置停用词
-stopwords <- c(
-  "する","それ","なる","ない","そこ","これ","ある", "さん", "なん", "の", "ん", 
-  "n", "RT", letters, LETTERS, 
-  "+", "<", ">", "><", 
-  "地球温暖化"
-)
-
 # 设置启动参数
+# 是否已有数据读取缓存
 cash_readcsv <- TRUE
-
-if (.Platform$OS.type == "windows") {
-  Sys.setlocale("LC_ALL", "Japanese")
-  userdic <- "C:/data/kangdict.dic"
-} else {
-  userdic <- "/Users/VickyWang/kang.dic"
-}
-
 # 要分析的文件夹路径和文件名
 csvdir <- "liteNoRT_url"
 csvfiles <- list.files(csvdir)
@@ -38,6 +23,21 @@ copngdir <- paste0("co_", csvdir, vernum)
 # 创建文件夹
 dir.create(barpngdir)
 dir.create(copngdir)
+
+# 设置停用词
+stopwords <- c(
+  "する","それ","なる","ない","そこ","これ","ある", "さん", "なん", "の", "ん", 
+  "n", "RT", letters, LETTERS, 
+  "+", "<", ">", "><", 
+  "地球温暖化"
+)
+
+if (.Platform$OS.type == "windows") {
+  Sys.setlocale("LC_ALL", "Japanese")
+  userdic <- "C:/data/kangdict.dic"
+} else {
+  userdic <- "/Users/VickyWang/kang.dic"
+}
 
 # 构建原始数据列表
 twtdata <- vector("list", length(csvfiles))
