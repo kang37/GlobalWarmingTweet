@@ -64,6 +64,7 @@ freq <- freq[order(freq$twt.txt, decreasing = TRUE), ]
 head(freq)
 
 # 条形图
+theme_set(theme_gray(base_size=12, base_family="HiraKakuProN-W3"))
 ggplot(head(freq, 10), aes(x = reorder(TERM, twt.txt), y = twt.txt)) + 
   geom_bar(stat = "identity") +
   coord_flip()
@@ -92,11 +93,11 @@ dim(ngram_sub)
 # 提取作图数据
 plotdata_ngram_sub <- graph_from_data_frame(ngram_sub)
 # tkplot(plotdata_ngram_sub)
-# plot(plotdata_ngram_sub, vertex.size = 20)
-
+# plot(plotdata_ngram_sub, vertex.size = 20, vertex.label.family="HiraKakuProN-W3")
+theme_set(theme_gray(base_size=12, base_family="HiraKakuProN-W3"))
 ggraph(plotdata_ngram_sub, layout = "fr") +
   geom_edge_link(aes(edge_alpha = twt.txt), show.legend = FALSE) +
   geom_node_point(color = "lightblue", size = 5) +
-  geom_node_text(aes(label = name), repel = TRUE) +
-  theme_void()
+  geom_node_text(aes(label = name), repel = TRUE, family="HiraKakuProN-W3") +
+  theme_graph(base_size=12, base_family="HiraKakuProN-W3")
 
