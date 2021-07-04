@@ -12,7 +12,7 @@ library(ggraph)
 
 # 设置停用词
 stopwords <- c(
-  "する","それ","なる","ない","そこ","これ","ある", "さん", "なん", "の", 
+  "する","それ","なる","ない","そこ","これ","ある", "さん", "なん", "の", "ん", 
   "n", "RT", letters, LETTERS, 
   "+", "<", ">", "><", 
   "地球温暖化"
@@ -28,8 +28,9 @@ if (.Platform$OS.type == "windows") {
   userdic <- "/Users/VickyWang/kang.dic"
 }
 
-# 要分析的文件名
-csvfiles <- list.files("liteClr")
+# 要分析的文件夹路径和文件名
+csvdir <- "liteNoRT_url/"
+csvfiles <- list.files("liteNoRT_url")
 
 # 构建原始数据列表
 twtdata <- vector("list", length(csvfiles))
@@ -38,25 +39,24 @@ names(twtdata) <- csvfiles
 # 开始出图
 starttime <- Sys.time()
 for (i in csvfiles) {
-  print(i)
   # 读取原始数据并筛出子集以测试代码
   if (cash_readcsv == FALSE) {
-    twtdata[[i]] <- read_csv(paste0("liteClr/", i))
+    twtdata[[i]] <- read_csv(paste0(csvdir, i))
   }
   
   twtdata_sub <- twtdata[[i]]
   
   # 清洗推文数据
   # Remove mentions, urls, emojis, numbers, punctuations, etc.
-  twtdata_sub$text <- gsub("@\\w+", "", twtdata_sub$text)
-  twtdata_sub$text <- gsub("https?://.+", "", twtdata_sub$text)
-  twtdata_sub$text <- gsub("\\d+\\w*\\d*", "", twtdata_sub$text)
-  twtdata_sub$text <- gsub("#\\w+", "", twtdata_sub$text)
-  twtdata_sub$text <- gsub("[[:punct:]]", " ", twtdata_sub$text)
-  twtdata_sub$text <- gsub("[0-9]", "", twtdata_sub$text)
+  twtdata_sub$textClr <- gsub("@\\w+", "", twtdata_sub$textClr)
+  twtdata_sub$textClr <- gsub("https?://.+", "", twtdata_sub$textClr)
+  twtdata_sub$textClr <- gsub("\\d+\\w*\\d*", "", twtdata_sub$textClr)
+  twtdata_sub$textClr <- gsub("#\\w+", "", twtdata_sub$textClr)
+  twtdata_sub$textClr <- gsub("[[:punct:]]", " ", twtdata_sub$textClr)
+  twtdata_sub$textClr <- gsub("[0-9]", "", twtdata_sub$textClr)
   
   # 将推文写入文件
-  write(twtdata_sub$text, "twt.txt")
+  write(twtdata_sub$textClr, "twt.txt")
   # 提取词频
   freq_ori <- docDF("twt.txt", type = 1, dic = userdic)
   # 进一步清除停止词
@@ -74,7 +74,7 @@ for (i in csvfiles) {
   
   # 条形图
   png(
-    filename = paste0("BAR/", i, "词频", ".png"), 
+    filename = paste0("bar_liteNoRT_url/", i, "词频", ".png"), 
     type = "cairo", # 抗锯齿
     res = 300, # 300ppi 分辨率
     width = 1600, height = 1600,
@@ -114,7 +114,7 @@ for (i in csvfiles) {
   #      vertex.label.family="HiraKakuProN-W3")
   # 输出图片
   png(
-    filename = paste0("CO/", i, "共现图", ".png"), 
+    filename = paste0("co_liteNoRT_url/", i, "共现图", ".png"), 
     type = "cairo", # 抗锯齿
     res = 300, # 300ppi 分辨率
     width = 1600, height = 1600,
@@ -124,11 +124,13 @@ for (i in csvfiles) {
     ggraph(plotdata_ngram_sub, layout = "fr") +
       geom_edge_link(aes(edge_alpha = twt.txt), show.legend = FALSE) +
       geom_node_point(color = "lightblue", size = 5) +
-      geom_node_text(aes(label = name), size = 3, repel=TRUE, family="HiraKakuProN-W3") +
+      geom_node_text(
+        aes(label = name), size = 3, repel=TRUE, family="HiraKakuProN-W3") +
       theme_graph(base_size=12)
   )
   dev.off()
+  print(i)
   print(Sys.time() - starttime)
 }
-sys.time() - starttime
+Sys.time() - starttime
 
