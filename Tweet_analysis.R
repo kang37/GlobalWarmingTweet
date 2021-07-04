@@ -68,8 +68,7 @@ library(igraph)
 library(ggraph)
 
 # 构建N-gram列表：
-# 假设N=1
-# 只选取三类词性
+# 假设N=1，且只选取三类词性
 # 问题：有些不需要的字符没有清理干净，影响共现判断
 ngram <- docDF("twt.txt", type = 1, pos = c("名詞", "形容詞", "動詞"), 
                nDF = 1, N = 2, dic = userdic)
@@ -85,10 +84,9 @@ dim(ngram_sub)
 plotdata_ngram_sub <- graph_from_data_frame(ngram_sub)
 # tkplot(plotdata_ngram_sub)
 # plot(plotdata_ngram_sub, vertex.size = 20, vertex.label.family="HiraKakuProN-W3")
-theme_set(theme_gray(base_size=12, base_family="HiraKakuProN-W3"))
 ggraph(plotdata_ngram_sub, layout = "fr") +
   geom_edge_link(aes(edge_alpha = twt.txt), show.legend = FALSE) +
   geom_node_point(color = "lightblue", size = 5) +
   geom_node_text(aes(label = name), repel = TRUE, family="HiraKakuProN-W3") +
-  theme_graph(base_size=12, base_family="HiraKakuProN-W3")
+  theme_graph(base_size=12)
 
