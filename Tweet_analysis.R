@@ -18,6 +18,9 @@ stopwords <- c(
   "地球温暖化"
 )
 
+# 设置启动参数
+cash_readcsv <- TRUE
+
 if (.Platform$OS.type == "windows") {
   Sys.setlocale("LC_ALL", "Japanese")
   userdic <- "C:/data/kangdict.dic"
@@ -25,11 +28,20 @@ if (.Platform$OS.type == "windows") {
   userdic <- "/Users/VickyWang/kang.dic"
 }
 
-for (i in list.files("liteClr")[1:2]) {
+# 要分析的文件名
+csvfiles <- list.files("liteClr")
+
+# 构建原始数据列表
+twtdata <- vector("list", length(csvfiles))
+names(twtdata) <- csvfiles
+
+for (i in csvfiles[1:2]) {
   # 读取原始数据并筛出子集以测试代码
-  twtdata <- read_csv(paste0("liteClr/", i))
-  twtdata_sub <- head(twtdata, 2000)
-  twtdata_sub
+  if (cash_readcsv == FALSE) {
+    twtdata[[i]] <- read_csv(paste0("liteClr/", i))
+  }
+  
+  twtdata_sub <- head(twtdata[[i]], 2000)
   
   # 清洗推文数据
   # Remove mentions, urls, emojis, numbers, punctuations, etc.
@@ -105,7 +117,7 @@ for (i in list.files("liteClr")[1:2]) {
     filename = paste0("CO/", i, "共现图", ".png"), 
     type = "cairo", # 抗锯齿
     res = 300, # 300ppi 分辨率
-    width = 1600, height = 1000,
+    width = 1600, height = 1600,
     bg = "transparent" # 透明背景
   )
   print(
