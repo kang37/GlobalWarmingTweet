@@ -103,8 +103,8 @@ for (i in csvfiles[1:2]) {
   # 查看各种词汇共现出现的次数
   table(ngram$twt.txt)
   
-  # 去除只出现次数少的连接
-  ngram_sub <- ngram[ngram$twt.txt > 50, ]
+  # 去除出现次数少于频数99.5分位数的连接
+  ngram_sub <- ngram[ngram$twt.txt > quantile(ngram$twt.txt, 0.995), ]
   dim(ngram_sub)
   
   # 提取作图数据
