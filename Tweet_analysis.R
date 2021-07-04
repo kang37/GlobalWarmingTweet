@@ -12,7 +12,7 @@ library(ggraph)
 
 # 设置启动参数
 # 是否已有数据读取缓存
-cash_readcsv <- TRUE
+cash_readcsv <- FALSE
 # 要分析的文件夹路径和文件名
 csvdir <- "liteNoRT_url"
 csvfiles <- list.files(csvdir)
@@ -39,18 +39,23 @@ if (.Platform$OS.type == "windows") {
   userdic <- "/Users/VickyWang/kang.dic"
 }
 
-# 构建原始数据列表
-twtdata <- vector("list", length(csvfiles))
-names(twtdata) <- csvfiles
+# 数据读取
+starttime <- Sys.time()
+if (cash_readcsv == FALSE) {
+  # 如果无数据读取缓存，则构建原始数据列表
+  twtdata <- vector("list", length(csvfiles))
+  names(twtdata) <- csvfiles
+  # 开始读取数据
+  for (i in csvfiles) {
+    twtdata[[i]] <- read_csv(paste0(csvdir, "/", i))
+  }
+}
+Sys.time() - starttime
 
 # 开始出图
 starttime <- Sys.time()
 for (i in csvfiles) {
-  # 读取原始数据并筛出子集以测试代码
-  if (cash_readcsv == FALSE) {
-    twtdata[[i]] <- read_csv(paste0(csvdir, "/", i))
-  }
-  
+  # 导入数据
   twtdata_sub <- twtdata[[i]]
   
   # 清洗推文数据
