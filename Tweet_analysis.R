@@ -19,7 +19,7 @@ stopwords <- c(
 )
 
 # 设置启动参数
-cash_readcsv <- TRUE
+cash_readcsv <- FALSE
 
 if (.Platform$OS.type == "windows") {
   Sys.setlocale("LC_ALL", "Japanese")
@@ -37,7 +37,8 @@ names(twtdata) <- csvfiles
 
 # 开始出图
 starttime <- Sys.time()
-for (i in csvfiles[1]) {
+for (i in csvfiles) {
+  print(i)
   # 读取原始数据并筛出子集以测试代码
   if (cash_readcsv == FALSE) {
     twtdata[[i]] <- read_csv(paste0("liteClr/", i))
@@ -56,12 +57,8 @@ for (i in csvfiles[1]) {
   
   # 将推文写入文件
   write(twtdata_sub$text, "twt.txt")
-  
   # 提取词频
-  start <- Sys.time()
   freq_ori <- docDF("twt.txt", type = 1, dic = userdic)
-  Sys.time() - start
-  
   # 进一步清除停止词
   freq <- freq_ori
   freq <- freq[freq$POS1 %in% c("名詞","動詞","形容詞") & 
@@ -105,8 +102,9 @@ for (i in csvfiles[1]) {
   # 查看各种词汇共现出现的次数
   table(ngram$twt.txt)
   
-  # 去除出现次数少于频数99.5分位数的连接
-  ngram_sub <- ngram[ngram$twt.txt > quantile(ngram$twt.txt, 0.995), ]
+  # 保留出现次数排名前50的连接
+  ngram_sub <- 
+    ngram[ngram$twt.txt %in% names(tail(table(ngram$twt.txt), 50)), ]
   dim(ngram_sub)
   
   # 提取作图数据
@@ -126,10 +124,11 @@ for (i in csvfiles[1]) {
     ggraph(plotdata_ngram_sub, layout = "fr") +
       geom_edge_link(aes(edge_alpha = twt.txt), show.legend = FALSE) +
       geom_node_point(color = "lightblue", size = 5) +
-      geom_node_text(aes(label = name), repel=TRUE, family="HiraKakuProN-W3") +
+      geom_node_text(aes(label = name), size = 3, repel=TRUE, family="HiraKakuProN-W3") +
       theme_graph(base_size=12)
   )
   dev.off()
+  print(Sys.time() - starttime)
 }
-Sys.time() - starttime
+sys.time() - starttime
 
