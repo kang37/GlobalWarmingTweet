@@ -28,8 +28,7 @@ dir.create(copngdir)
 stopwords <- c(
   "する","それ","なる","ない","そこ","これ","ある", "さん", "なん", "の", "ん", 
   "n", "RT", letters, LETTERS, 
-  "+", "<", ">", "><", 
-  "地球温暖化"
+  "+", "<", ">", "><"
 )
 
 if (.Platform$OS.type == "windows") {
@@ -94,7 +93,7 @@ for (i in csvfiles) {
   )
   theme_set(theme_gray(base_size=12, base_family="HiraKakuProN-W3"))
   print(
-    ggplot(head(freq, 10), aes(x = reorder(TERM, twt.txt), y = twt.txt)) + 
+    ggplot(head(freq, 30), aes(x = reorder(TERM, twt.txt), y = twt.txt)) + 
       geom_bar(stat = "identity") + 
       labs(x = i) + 
       coord_flip()
