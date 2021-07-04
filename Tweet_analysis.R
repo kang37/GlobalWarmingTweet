@@ -8,6 +8,12 @@ library(readr)
 library(RMeCab)
 library(ggplot2)
 
+# 设置停用词
+stopwords <- c("する","それ","なる","ない","そこ","これ","ある", "さん", "なん", "の", 
+               "n", "RT", letters, LETTERS, 
+               "+", "<", ">", "><", 
+               "地球温暖化")
+
 if (.Platform$OS.type == "windows") {
   Sys.setlocale("LC_ALL", "Japanese")
   userdic <- "C:/data/kangdict.dic"
@@ -38,10 +44,6 @@ freq_ori <- docDF("twt.txt", type = 1, dic = userdic)
 Sys.time() - start
 
 # 进一步清除停止词
-stopwords <- c("する","それ","なる","ない","そこ","これ","ある", 
-               "n", "RT", letters, LETTERS, 
-               "+", "<", ">", "><", 
-               "地球温暖化")
 freq <- freq_ori
 freq <- freq[freq$POS1 %in% c("名詞","動詞","形容詞") & 
                !(freq$POS2 %in% c("非自立","接尾", "数")) &
