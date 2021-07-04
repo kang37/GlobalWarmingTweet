@@ -9,10 +9,12 @@ library(RMeCab)
 library(ggplot2)
 
 # 设置停用词
-stopwords <- c("する","それ","なる","ない","そこ","これ","ある", "さん", "なん", "の", 
-               "n", "RT", letters, LETTERS, 
-               "+", "<", ">", "><", 
-               "地球温暖化")
+stopwords <- c(
+  "する","それ","なる","ない","そこ","これ","ある", "さん", "なん", "の", 
+  "n", "RT", letters, LETTERS, 
+  "+", "<", ">", "><", 
+  "地球温暖化"
+)
 
 if (.Platform$OS.type == "windows") {
   Sys.setlocale("LC_ALL", "Japanese")
