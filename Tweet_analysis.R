@@ -7,6 +7,8 @@
 library(readr)
 library(RMeCab)
 library(ggplot2)
+library(igraph)
+library(ggraph)
 
 # 设置停用词
 stopwords <- c(
@@ -60,19 +62,23 @@ for (i in list.files("liteClr")[1:2]) {
   head(freq)
   
   # 条形图
+  png(
+    filename = paste0("BAR/", i, "词频", ".png"), 
+    type = "cairo", # 抗锯齿
+    res = 300, # 300ppi 分辨率
+    width = 1600, height = 1600,
+    bg = "transparent" # 透明背景
+  )
   theme_set(theme_gray(base_size=12, base_family="HiraKakuProN-W3"))
-  print(ggplot(head(freq, 10), aes(x = reorder(TERM, twt.txt), y = twt.txt)) + 
-          geom_bar(stat = "identity") + 
-          labs(x = i) + 
-          coord_flip())
+  print(
+    ggplot(head(freq, 10), aes(x = reorder(TERM, twt.txt), y = twt.txt)) + 
+      geom_bar(stat = "identity") + 
+      labs(x = i) + 
+      coord_flip()
+  )
+  dev.off()
   
-  # 输出目前结果，进一步手动挑选
-  write_csv(head(freq, 400), "请挑选停用词.csv")
-  
-  # 共现图 ----
-  library(igraph)
-  library(ggraph)
-  
+  # 词汇共现图 ----
   # 构建N-gram列表：
   # 假设N=1，且只选取三类词性
   # 问题：有些不需要的字符没有清理干净，影响共现判断
@@ -94,10 +100,21 @@ for (i in list.files("liteClr")[1:2]) {
   # tkplot(plotdata_ngram_sub)
   # plot(plotdata_ngram_sub, vertex.size = 20, 
   #      vertex.label.family="HiraKakuProN-W3")
-  print(ggraph(plotdata_ngram_sub, layout = "fr") +
-          geom_edge_link(aes(edge_alpha = twt.txt), show.legend = FALSE) +
-          geom_node_point(color = "lightblue", size = 5) +
-          geom_node_text(aes(label = name), repel = TRUE, family="HiraKakuProN-W3") +
-          theme_graph(base_size=12))
+  # 输出图片
+  png(
+    filename = paste0("CO/", i, "共现图", ".png"), 
+    type = "cairo", # 抗锯齿
+    res = 300, # 300ppi 分辨率
+    width = 1600, height = 1000,
+    bg = "transparent" # 透明背景
+  )
+  print(
+    ggraph(plotdata_ngram_sub, layout = "fr") +
+      geom_edge_link(aes(edge_alpha = twt.txt), show.legend = FALSE) +
+      geom_node_point(color = "lightblue", size = 5) +
+      geom_node_text(aes(label = name), repel=TRUE, family="HiraKakuProN-W3") +
+      theme_graph(base_size=12)
+  )
+  dev.off()
 }
 
