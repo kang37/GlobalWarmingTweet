@@ -35,13 +35,15 @@ csvfiles <- list.files("liteClr")
 twtdata <- vector("list", length(csvfiles))
 names(twtdata) <- csvfiles
 
-for (i in csvfiles[1:2]) {
+# 开始出图
+starttime <- Sys.time()
+for (i in csvfiles[1]) {
   # 读取原始数据并筛出子集以测试代码
   if (cash_readcsv == FALSE) {
     twtdata[[i]] <- read_csv(paste0("liteClr/", i))
   }
   
-  twtdata_sub <- head(twtdata[[i]], 2000)
+  twtdata_sub <- twtdata[[i]]
   
   # 清洗推文数据
   # Remove mentions, urls, emojis, numbers, punctuations, etc.
@@ -129,4 +131,5 @@ for (i in csvfiles[1:2]) {
   )
   dev.off()
 }
+Sys.time() - starttime
 
