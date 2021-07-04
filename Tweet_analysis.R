@@ -19,7 +19,7 @@ stopwords <- c(
 )
 
 # 设置启动参数
-cash_readcsv <- FALSE
+cash_readcsv <- TRUE
 
 if (.Platform$OS.type == "windows") {
   Sys.setlocale("LC_ALL", "Japanese")
@@ -29,8 +29,15 @@ if (.Platform$OS.type == "windows") {
 }
 
 # 要分析的文件夹路径和文件名
-csvdir <- "liteNoRT_url/"
-csvfiles <- list.files("liteNoRT_url")
+csvdir <- "liteNoRT_url"
+csvfiles <- list.files(csvdir)
+# 要存储结果图的路径
+vernum <- 2
+barpngdir <- paste0("bar_", csvdir, vernum)
+copngdir <- paste0("co_", csvdir, vernum)
+# 创建文件夹
+dir.create(barpngdir)
+dir.create(copngdir)
 
 # 构建原始数据列表
 twtdata <- vector("list", length(csvfiles))
@@ -41,7 +48,7 @@ starttime <- Sys.time()
 for (i in csvfiles) {
   # 读取原始数据并筛出子集以测试代码
   if (cash_readcsv == FALSE) {
-    twtdata[[i]] <- read_csv(paste0(csvdir, i))
+    twtdata[[i]] <- read_csv(paste0(csvdir, "/", i))
   }
   
   twtdata_sub <- twtdata[[i]]
@@ -74,7 +81,7 @@ for (i in csvfiles) {
   
   # 条形图
   png(
-    filename = paste0("bar_liteNoRT_url/", i, "词频", ".png"), 
+    filename = paste0(barpngdir, "/", i, "词频", ".png"), 
     type = "cairo", # 抗锯齿
     res = 300, # 300ppi 分辨率
     width = 1600, height = 1600,
@@ -114,7 +121,7 @@ for (i in csvfiles) {
   #      vertex.label.family="HiraKakuProN-W3")
   # 输出图片
   png(
-    filename = paste0("co_liteNoRT_url/", i, "共现图", ".png"), 
+    filename = paste0(copngdir, "/", i, "共现图", ".png"), 
     type = "cairo", # 抗锯齿
     res = 300, # 300ppi 分辨率
     width = 1600, height = 1600,
