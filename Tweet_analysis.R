@@ -12,12 +12,12 @@ library(ggraph)
 
 # 设置启动参数
 # 是否已有数据读取缓存
-cash_readcsv <- FALSE
+cash_readcsv <- TRUE
 # 要分析的文件夹路径和文件名
 csvdir <- "liteNoRT_url"
 csvfiles <- list.files(csvdir)
 # 要存储结果图的路径
-vernum <- 2
+vernum <- 3
 barpngdir <- paste0("bar_", csvdir, vernum)
 copngdir <- paste0("co_", csvdir, vernum)
 # 创建文件夹
@@ -48,6 +48,15 @@ if (cash_readcsv == FALSE) {
   for (i in csvfiles) {
     twtdata[[i]] <- read_csv(paste0(csvdir, "/", i))
   }
+}
+Sys.time() - starttime
+
+# 补充数据清洗
+# 去除特定的推文
+starttime <- Sys.time()
+for (i in csvfiles) {
+  twtdata[[i]] <- twtdata[[i]][
+    grepl("世界の財界、ボクシング会長、その関係者", twtdata[[i]]$text) == FALSE, ]
 }
 Sys.time() - starttime
 
@@ -141,7 +150,6 @@ for (i in csvfiles) {
   )
   dev.off()
   print(i)
-  print(Sys.time() - starttime)
 }
 Sys.time() - starttime
 
