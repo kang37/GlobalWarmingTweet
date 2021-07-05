@@ -17,7 +17,7 @@ cash_readcsv <- TRUE
 csvdir <- "liteNoRT_url"
 csvfiles <- list.files(csvdir)
 # 要存储结果图的路径
-vernum <- 3
+vernum <- 6
 barpngdir <- paste0("bar_", csvdir, vernum)
 copngdir <- paste0("co_", csvdir, vernum)
 # 创建文件夹
@@ -27,6 +27,14 @@ dir.create(copngdir)
 # 设置停用词
 stopwords <- c(
   "する","それ","なる","ない","そこ","これ","ある", "さん", "なん", "の", "ん", 
+  "いる", "思う", "そう", "れる", "くる", "考える", "言う", 
+  "できる", 
+  "一", 
+  "いい", 
+  "何", 
+  "いう", 
+  "できる", 
+  "られる", 
   "n", "RT", letters, LETTERS, 
   "+", "<", ">", "><"
 )
@@ -57,6 +65,8 @@ starttime <- Sys.time()
 for (i in csvfiles) {
   twtdata[[i]] <- twtdata[[i]][
     grepl("世界の財界、ボクシング会長、その関係者", twtdata[[i]]$text) == FALSE, ]
+  twtdata[[i]] <- twtdata[[i]][
+    grepl("世界の財界へ、露骨に妨害", twtdata[[i]]$text) == FALSE, ]
 }
 Sys.time() - starttime
 
