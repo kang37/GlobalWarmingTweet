@@ -1,3 +1,4 @@
+# before the code: 
 # install mecab in cmd
 # brew install mecab
 # brew install mecab-ipadic
