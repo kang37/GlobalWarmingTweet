@@ -2,9 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
-*.csv
-<<<<<<< HEAD
-*.txt
-=======
-*.txt
->>>>>>> e533afe21c4c0ef1655a1c8fdee292e998be7bba
+File
+RawData
+AnaData
+.DS_Store

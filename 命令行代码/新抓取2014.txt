@@ -1,0 +1,24 @@
+twarc2 search "(#気候変動 OR #地球温暖化 OR #温暖化 OR #ClimateChange OR #GlobalWarming OR 地球温暖化 OR 温暖化 OR 気候変動) lang:ja" --archive --start-time "2013-12-31T15:00:00" --end-time "2014-01-31T15:00:00" jst201401.json
+
+twarc2 search "(#気候変動 OR #地球温暖化 OR #温暖化 OR #ClimateChange OR #GlobalWarming OR 地球温暖化 OR 温暖化 OR 気候変動) lang:ja" --archive --start-time "2014-01-31T15:00:00" --end-time "2014-02-28T15:00:00" jst201402.json
+
+
+twarc2 search "(#気候変動 OR #地球温暖化 OR #温暖化 OR #ClimateChange OR #GlobalWarming OR 地球温暖化 OR 温暖化 OR 気候変動) lang:ja" --archive --start-time "2014-02-28T15:00:00" --end-time "2014-03-31T15:00:00" jst201403.json
+
+twarc2 search "(#気候変動 OR #地球温暖化 OR #温暖化 OR #ClimateChange OR #GlobalWarming OR 地球温暖化 OR 温暖化 OR 気候変動) lang:ja" --archive --start-time "2014-03-31T15:00:00" --end-time "2014-04-30T15:00:00" jst201404.json
+
+twarc2 search "(#気候変動 OR #地球温暖化 OR #温暖化 OR #ClimateChange OR #GlobalWarming OR 地球温暖化 OR 温暖化 OR 気候変動) lang:ja" --archive --start-time "2014-04-30T15:00:00" --end-time "2014-05-31T15:00:00" jst201405.json
+
+twarc2 search "(#気候変動 OR #地球温暖化 OR #温暖化 OR #ClimateChange OR #GlobalWarming OR 地球温暖化 OR 温暖化 OR 気候変動) lang:ja" --archive --start-time "2014-05-31T15:00:00" --end-time "2014-06-30T15:00:00" jst201406.json
+
+twarc2 search "(#気候変動 OR #地球温暖化 OR #温暖化 OR #ClimateChange OR #GlobalWarming OR 地球温暖化 OR 温暖化 OR 気候変動) lang:ja" --archive --start-time "2014-06-30T15:00:00" --end-time "2014-07-31T15:00:00" jst201407.json
+
+twarc2 search "(#気候変動 OR #地球温暖化 OR #温暖化 OR #ClimateChange OR #GlobalWarming OR 地球温暖化 OR 温暖化 OR 気候変動) lang:ja" --archive --start-time "2014-07-31T15:00:00" --end-time "2014-08-31T15:00:00" jst201408.json
+
+twarc2 search "(#気候変動 OR #地球温暖化 OR #温暖化 OR #ClimateChange OR #GlobalWarming OR 地球温暖化 OR 温暖化 OR 気候変動) lang:ja" --archive --start-time "2014-08-31T15:00:00" --end-time "2014-09-30T15:00:00" jst201409.json
+
+twarc2 search "(#気候変動 OR #地球温暖化 OR #温暖化 OR #ClimateChange OR #GlobalWarming OR 地球温暖化 OR 温暖化 OR 気候変動) lang:ja" --archive --start-time "2014-09-30T15:00:00" --end-time "2014-10-31T15:00:00" jst201410.json
+
+twarc2 search "(#気候変動 OR #地球温暖化 OR #温暖化 OR #ClimateChange OR #GlobalWarming OR 地球温暖化 OR 温暖化 OR 気候変動) lang:ja" --archive --start-time "2014-10-31T15:00:00" --end-time "2014-11-30T15:00:00" jst201411.json
+
+twarc2 search "(#気候変動 OR #地球温暖化 OR #温暖化 OR #ClimateChange OR #GlobalWarming OR 地球温暖化 OR 温暖化 OR 気候変動) lang:ja" --archive --start-time "2014-11-30T15:00:00" --end-time "2014-12-31T15:00:00" jst201412.json
