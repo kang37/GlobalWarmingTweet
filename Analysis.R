@@ -66,16 +66,6 @@ num_yr <- data.frame(
 # 构建年度数据
 raw_yr <- lapply(raw, function(x) Reduce(rbind, x))
 
-# 去除无意义的推文
-# 待办：有些包含这些词的推文可能是有意义的不应去除？
-for (i in names(raw_yr)) {
-  raw_yr[[i]] <- raw_yr[[i]][
-    grepl("世界の財界", raw_yr[[i]]$text) == FALSE & 
-      grepl("無実", raw_yr[[i]]$text) == FALSE & 
-      grepl("誓約", raw_yr[[i]]$text) == FALSE & 
-      grepl("露骨", raw_yr[[i]]$text) == FALSE , ]
-}
-
 ##. 气象数据 ----
 # 读取日本气象局下载的气候异常指标数据
 file2read <- list.files("JMA")
