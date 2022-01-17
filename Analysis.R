@@ -323,22 +323,24 @@ num_mth$mth <- as.numeric(substr(num_mth$date, 5, 6))
 # 汇总计算年度数据
 num_mth_smry <- aggregate(tweet ~ yr, data = num_mth, FUN = sum)
 names(num_mth_smry)[2] <- "tweet_tot"
-for (i in c("tweetNoRT", "retweet", "tweetReply", "tweetQt", "tweetOrg")) {
+for (i in c("tweetNoRT", "retweet", "tweetReply", "tweetQt", "tweetOrg", 
+            "tweet_No_RT_url", "tweetOrg_No_url")) {
   num_mth_smry[paste0(i, "_tot")] <- 
     aggregate(num_mth[[i]] ~ num_mth$yr, FUN = sum)[2]
 }
 
 # 将年度数据合并到月份并且计算各项指标标准化值
 num_mth_std <- merge(num_mth, num_mth_smry, by = "yr")
-for (i in c("tweet", "tweetNoRT", "retweet", "tweetReply", "tweetQt", "tweetOrg")) {
+for (i in c("tweet", "tweetNoRT", "retweet", "tweetReply", "tweetQt", "tweetOrg", 
+            "tweet_No_RT_url", "tweetOrg_No_url")) {
   num_mth_std[[i]] <- 
     num_mth_std[[i]] / num_mth_std[[paste0(i, "_tot")]]
 }
 num_mth_std$mth <- as.factor(num_mth_std$mth)
 
 # 点图
-for (i in 
-     c("tweet", "tweetNoRT", "retweet", "tweetReply", "tweetQt", "tweetOrg")) {
+for (i in c("tweet", "tweetNoRT", "retweet", "tweetReply", "tweetQt", 
+            "tweetOrg", "tweet_No_RT_url", "tweetOrg_No_url")) {
   if(set_picexp) png(paste("AnaData/月度数据标准值点图", i, ".png"), 
                      width = 1000, height = 1000, res = 150)
   print(ggplot(num_mth_std) + 
@@ -346,8 +348,8 @@ for (i in
   if(set_picexp) dev.off()
 }
 # 各月份箱型图
-for (i in 
-     c("tweet", "tweetNoRT", "retweet", "tweetReply", "tweetQt", "tweetOrg")) {
+for (i in c("tweet", "tweetNoRT", "retweet", "tweetReply", "tweetQt", 
+            "tweetOrg", "tweet_No_RT_url", "tweetOrg_No_url")) {
   if(set_picexp) png(paste("AnaData/月度数据标准值箱型图", i, ".png"), 
                      width = 1000, height = 1000, res = 150)
   print(ggplot(num_mth_std) + 
@@ -355,14 +357,31 @@ for (i in
   if(set_picexp) dev.off()
 }
 # 各年份箱型图
-for (i in 
-     c("tweet", "tweetNoRT", "retweet", "tweetReply", "tweetQt", "tweetOrg")) {
+for (i in c("tweet", "tweetNoRT", "retweet", "tweetReply", "tweetQt", 
+            "tweetOrg", "tweet_No_RT_url", "tweetOrg_No_url")) {
   if(set_picexp) png(paste("AnaData/年度数据标准值箱型图", i, ".png"), 
                      width = 1000, height = 1000, res = 150)
-  print(ggplot(num_mth_std) + 
+  print(ggplot(num_mth) + 
           geom_boxplot(aes_string(x = "yr", y = i)))
   if(set_picexp) dev.off()
 }
+# 特定推文类型占特定推文类型比例折线图
+if(set_picexp) png(paste("AnaData/原创推文占比折线图", i, ".png"), 
+                   width = 1000, height = 1000, res = 150)
+temp_num_mth <- num_mth
+temp_num_mth$label <- ""
+temp_num_mth$label[which(temp_num_mth$mth == 1)] <- 
+  temp_num_mth$yr[which(temp_num_mth$mth == 1)]
+ggplot(num_mth) + 
+  geom_line(aes(x = as.factor(date), 
+                y = tweetOrg/tweetNoRT, group = 1), color = "red") + 
+  geom_line(aes(x = as.factor(date), 
+                y = tweetOrg_No_url/tweetNoRT, group = 1), color = "blue") + 
+  labs(x = "", y = "Percentage") +
+  theme(axis.ticks.x = element_blank(), 
+        panel.grid.major = element_blank()) + 
+  scale_x_discrete(labels = temp_num_mth$label)
+if(set_picexp) dev.off()
 
 ##. 2021年9-11月词频及共现 ----
 # 读取原始数据
