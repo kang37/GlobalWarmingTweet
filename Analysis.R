@@ -344,7 +344,8 @@ for (i in c("tweet", "tweetNoRT", "retweet", "tweetReply", "tweetQt",
   if(set_picexp) png(paste("AnaData/月度数据标准值点图", i, ".png"), 
                      width = 1000, height = 1000, res = 150)
   print(ggplot(num_mth_std) + 
-          geom_point(aes_string(x = "mth", y = i, color = "yr")))
+          geom_point(aes_string(x = "mth", y = i, color = "yr")) +
+          labs(x = "Month", y = paste0("Percentage of ", i)))
   if(set_picexp) dev.off()
 }
 # 各月份箱型图
@@ -353,16 +354,18 @@ for (i in c("tweet", "tweetNoRT", "retweet", "tweetReply", "tweetQt",
   if(set_picexp) png(paste("AnaData/月度数据标准值箱型图", i, ".png"), 
                      width = 1000, height = 1000, res = 150)
   print(ggplot(num_mth_std) + 
-          geom_boxplot(aes_string(x = "mth", y = i)))
+          geom_boxplot(aes_string(x = "mth", y = i)) +
+          labs(x = "Month", y = paste0("Percentage of ", i)))
   if(set_picexp) dev.off()
 }
 # 各年份箱型图
 for (i in c("tweet", "tweetNoRT", "retweet", "tweetReply", "tweetQt", 
             "tweetOrg", "tweet_No_RT_url", "tweetOrg_No_url")) {
-  if(set_picexp) png(paste("AnaData/年度数据标准值箱型图", i, ".png"), 
+  if(set_picexp) png(paste("AnaData/年度数据箱型图", i, ".png"), 
                      width = 1000, height = 1000, res = 150)
   print(ggplot(num_mth) + 
-          geom_boxplot(aes_string(x = "yr", y = i)))
+          geom_boxplot(aes_string(x = "yr", y = i)) + 
+          labs(x = "Year", y = paste0("Number of ", i)))
   if(set_picexp) dev.off()
 }
 # 特定推文类型占特定推文类型比例折线图
