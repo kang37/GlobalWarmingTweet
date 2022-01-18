@@ -87,6 +87,7 @@ num_yr <- merge(num_yr, jma_df, by.x = "yr", by.y = "year")
 ##. 概况可视化 ----
 num_yr <- merge(num_yr, read.csv("RawData/UserCount2012-2021.csv"), 
                 by.x = "yr", by.y = "X")
+# 各年各月份转推、非转推、用户比例图
 if(set_picexp) png("AnaData/各年推文及用户数.png", 
                    width = 900, height = 500, res = 150)
 temp_num_yr <- num_yr
@@ -309,6 +310,26 @@ if(set_picexp) png("AnaData/单因素回归分析图.png",
                    width = 1000, height = 1000, res = 150)
 plot(num_yr$amdday400mm_p, num_yr$num)
 abline(fit)
+if(set_picexp) dev.off()
+
+##. 情感分析结果图 ----
+# 情感分析输入数据来自Python分析输出
+senti <- read.csv("RawData/oseti201201-202111.csv")
+if(set_picexp) png("AnaData/2012-2021各月份情感分析.png", 
+                   width = 900, height = 500, res = 150)
+senti_lng$variable <- 
+  factor(senti_lng$variable, levels = c("Positive", "Neutral", "Negative"))
+senti_lng <- reshape2::melt(senti, id = "X")
+senti_lng$month <- substr(senti_lng$X, 5, 6)
+senti_lng$label <- ""
+senti_lng$label[which(senti_lng$month == "01")] <- 
+  substr(senti_lng$X[which(senti_lng$month == "01")], 1, 4)
+ggplot(senti_lng) + 
+  geom_col(aes(as.factor(X), value, fill = variable, color = variable)) +
+  labs(x = "", y = "Percentage") +
+  theme(axis.ticks.x = element_blank(), 
+        panel.grid.major = element_blank()) + 
+  scale_x_discrete(labels = temp_num_mth$label) 
 if(set_picexp) dev.off()
 
 # 月度数据 ----
