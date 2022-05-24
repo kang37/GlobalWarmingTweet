@@ -88,7 +88,7 @@ num_yr <- merge(num_yr, jma_df, by.x = "yr", by.y = "year")
 num_yr <- merge(num_yr, read.csv("RawData/UserCount2012-2021.csv"), 
                 by.x = "yr", by.y = "X")
 # 各年各月份转推、非转推、用户比例图
-if(set_picexp) png("AnaData/各年推文及用户数.png", 
+if(set_picexp) png("ProcData/各年推文及用户数.png", 
                    width = 900, height = 500, res = 150)
 temp_num_yr <- num_yr
 temp_num_yr$date <- paste0(temp_num_yr$yr, "06")
@@ -138,7 +138,7 @@ if(set_txtexit == FALSE) {
     twtdata_sub$text <- gsub("[0-9]", "", twtdata_sub$text)
     
     # 将推文写入*.txt文件
-    write(twtdata_sub$text, file = paste0("AnaData/TxtGen/", i, "_text.txt"))
+    write(twtdata_sub$text, file = paste0("ProcData/TxtGen/", i, "_text.txt"))
   }
 }
 
@@ -149,7 +149,7 @@ names(freq) <- names(raw_yr)
 
 for (i in names(raw_yr)) {
   freq[[i]] <- 
-    docDF(target = paste0("AnaData/TxtGen/", i, "_text.txt"), 
+    docDF(target = paste0("ProcData/TxtGen/", i, "_text.txt"), 
           type = 1, dic = userdic)
   
   # 进一步清除停止词
@@ -167,7 +167,7 @@ for (i in names(raw_yr)) {
 # 词频图片导出
 for (i in names(raw_yr)) {
   png(
-    filename = paste0("AnaData/WordFreqBar", "/", i, "词频", ".png"), 
+    filename = paste0("ProcData/WordFreqBar", "/", i, "词频", ".png"), 
     res = 300, # 300ppi分辨率
     width = 1600, height = 1600,
     bg = "transparent" # 透明背景
@@ -194,7 +194,7 @@ for (i in names(raw_yr)) {
   # 构建N-gram列表：
   # 假设N=1，且只选取三类词性
   # 待办：有些不需要的字符没有清理干净，影响共现判断
-  ngram[[i]] <- docDF(target = paste0("AnaData/TxtGen/", i, "_text.txt"), 
+  ngram[[i]] <- docDF(target = paste0("ProcData/TxtGen/", i, "_text.txt"), 
                       type = 1, pos = c("名詞", "形容詞", "動詞"), 
                       nDF = 1, N = 2, dic = userdic)
   # 进一步去除停用词
@@ -218,7 +218,7 @@ for (i in names(raw_yr)) {
   #      vertex.label.family="HiraKakuProN-W3")
   # 输出图片
   png(
-    filename = paste0("AnaData/CoOccNet/", i, "共现", ".png"), 
+    filename = paste0("ProcData/CoOccNet/", i, "共现", ".png"), 
     res = 300, # 300ppi 分辨率
     width = 1600, height = 1600,
     bg = "transparent" # 透明背景
@@ -292,7 +292,7 @@ for(i in gsub(".csv", "", names(jma))) {
 # 待办：大部分不符合正态性，之后可以考虑进行变换
 
 # 检测自变量自相关性
-if(set_picexp) png("AnaData/自变量自相关图.png", 
+if(set_picexp) png("ProcData/自变量自相关图.png", 
                    width = 900, height = 900, res = 150)
 chart.Correlation(
   num_yr[c("num", "amdday200mm_p", "amdday400mm_p", "amdhour50mm_p", 
@@ -306,7 +306,7 @@ for (i in names(jma_df)[-1]) {
 }
 # 对p值显著的结果画图
 fit <- lm(num ~ amdday400mm_p, data = num_yr)
-if(set_picexp) png("AnaData/单因素回归分析图.png", 
+if(set_picexp) png("ProcData/单因素回归分析图.png", 
                    width = 1000, height = 1000, res = 150)
 plot(num_yr$amdday400mm_p, num_yr$num)
 abline(fit)
@@ -315,7 +315,7 @@ if(set_picexp) dev.off()
 ##. 情感分析结果图 ----
 # 情感分析输入数据来自Python分析输出
 senti <- read.csv("RawData/oseti201201-202111.csv")
-if(set_picexp) png("AnaData/2012-2021各月份情感分析.png", 
+if(set_picexp) png("ProcData/2012-2021各月份情感分析.png", 
                    width = 900, height = 500, res = 150)
 senti_lng$variable <- 
   factor(senti_lng$variable, levels = c("Positive", "Neutral", "Negative"))
@@ -362,7 +362,7 @@ num_mth_std$mth <- as.factor(num_mth_std$mth)
 # 点图
 for (i in c("tweet", "tweetNoRT", "retweet", "tweetReply", "tweetQt", 
             "tweetOrg", "tweet_No_RT_url", "tweetOrg_No_url")) {
-  if(set_picexp) png(paste("AnaData/月度数据标准值点图", i, ".png"), 
+  if(set_picexp) png(paste("ProcData/月度数据标准值点图", i, ".png"), 
                      width = 1000, height = 1000, res = 150)
   print(ggplot(num_mth_std) + 
           geom_point(aes_string(x = "mth", y = i, color = "yr")) +
@@ -372,7 +372,7 @@ for (i in c("tweet", "tweetNoRT", "retweet", "tweetReply", "tweetQt",
 # 各月份箱型图
 for (i in c("tweet", "tweetNoRT", "retweet", "tweetReply", "tweetQt", 
             "tweetOrg", "tweet_No_RT_url", "tweetOrg_No_url")) {
-  if(set_picexp) png(paste("AnaData/月度数据标准值箱型图", i, ".png"), 
+  if(set_picexp) png(paste("ProcData/月度数据标准值箱型图", i, ".png"), 
                      width = 1000, height = 1000, res = 150)
   print(ggplot(num_mth_std) + 
           geom_boxplot(aes_string(x = "mth", y = i)) +
@@ -382,7 +382,7 @@ for (i in c("tweet", "tweetNoRT", "retweet", "tweetReply", "tweetQt",
 # 各年份箱型图
 for (i in c("tweet", "tweetNoRT", "retweet", "tweetReply", "tweetQt", 
             "tweetOrg", "tweet_No_RT_url", "tweetOrg_No_url")) {
-  if(set_picexp) png(paste("AnaData/年度数据箱型图", i, ".png"), 
+  if(set_picexp) png(paste("ProcData/年度数据箱型图", i, ".png"), 
                      width = 1000, height = 1000, res = 150)
   print(ggplot(num_mth) + 
           geom_boxplot(aes_string(x = "yr", y = i)) + 
@@ -390,7 +390,7 @@ for (i in c("tweet", "tweetNoRT", "retweet", "tweetReply", "tweetQt",
   if(set_picexp) dev.off()
 }
 # 特定推文类型占特定推文类型比例折线图
-if(set_picexp) png(paste("AnaData/原创推文占比折线图", i, ".png"), 
+if(set_picexp) png(paste("ProcData/原创推文占比折线图", i, ".png"), 
                    width = 1000, height = 1000, res = 150)
 temp_num_mth <- num_mth
 temp_num_mth$label <- ""
@@ -421,7 +421,7 @@ for (i in names(raw_mth_2021)) {
   
   # 将推文写入*.txt文件
   write(as.character(twtdata_sub$textClr), 
-        file = paste0("AnaData/TxtGen/Mth2021/", i, "_text.txt"))
+        file = paste0("ProcData/TxtGen/Mth2021/", i, "_text.txt"))
 }
 
 # 词频分析
@@ -442,7 +442,7 @@ for (i in names(ngram_2021)) {
   # 假设N=1，且只选取三类词性
   # 待办：有些不需要的字符没有清理干净，影响共现判断
   ngram_2021[[i]] <- 
-    docDF(target = paste0("AnaData/TxtGen/Mth2021/", i, "_text.txt"), 
+    docDF(target = paste0("ProcData/TxtGen/Mth2021/", i, "_text.txt"), 
           type = 1, pos = c("名詞", "形容詞", "動詞"), 
           nDF = 1, N = 2, dic = userdic)
   # 进一步去除停用词
@@ -467,7 +467,7 @@ for (i in names(ngram_2021)) {
   #      vertex.label.family="HiraKakuProN-W3")
   # 输出图片
   png(
-    filename = paste0("AnaData/CoOccNet/Mth2021/", i, "共现", ".png"), 
+    filename = paste0("ProcData/CoOccNet/Mth2021/", i, "共现", ".png"), 
     res = 300, # 300ppi 分辨率
     width = 1600, height = 1600,
     bg = "transparent" # 透明背景
