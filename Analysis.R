@@ -1,13 +1,16 @@
-# 准备工作：
+# Statement ----
+# 用于分析气候变化推文数据，生成词频、共现等结果
+
+# Before run ----
 # 通过终端安装mecab：
 # brew install mecab
 # brew install mecab-ipadic
 
-# 安装所需的R包
-# 注意安装RMeCab的时候可以用如下语句：
+# Packages ----
+# 安装RMeCab的时候可以用如下语句：
 # install.packages ("RMeCab", repos = "http://rmecab.jp/R", type = "source")
-
 library(PerformanceAnalytics)
+library(dplyr)
 library(ggplot2)
 library(patchwork)
 library(readr)
@@ -17,16 +20,36 @@ library(ggraph)
 library(reshape2)
 library(showtext)
 
-# 基本设置 ----
+# Function ----
+# 函数：根据名称生成空列表
+fun_ls_gen <- function(name_ls) {
+  output_ls <- vector("list", length = length(name_ls))
+  names(output_ls) <- name_ls
+  return(output_ls)
+}
+
+# Setting ----
 set_txtexit <- TRUE  # 是否已有推文内容的*.txt文件
 set_picexp <- TRUE # 是否出图
 showtext_auto()
-
-ana_yr <- 2012:2020
+ana_yr <- 2012:2021
 
 # 数据读取 ----
-##. 推文数据及清洗 ----
-# 读取推文存储在年和月双层数据列表中
+# Stop words and dictionary ----
+# 设置停用词
+stopwords <- c(
+  "する","それ","なる","ない","そこ","これ","ある", "さん", "なん", "の", "ん", 
+  "いる", "思う", "そう", "れる", "くる", "考える", "言う", "ー", 
+  "できる", "てる", "でる", "世界の財界", "一", "いい", "何", "いう", "できる", 
+  "られる", "n", "RT", letters, LETTERS, 
+  "+", "<", ">", "><", "!!", "#", "!?", "@", "(", "/", "\\"
+)
+
+# 选择用户自定义词典
+userdic <- "RawData/Global_warming_tweet.dic"
+
+## Twitter data clean ----
+# 读取推文存储在年和月双层列表中
 raw <- vector("list", length = length(ana_yr))
 names(raw) <- ana_yr
 
@@ -36,9 +59,11 @@ for (i in names(raw)) {
 }
 
 for (i in ana_yr) {
-  file2read <- grep("csv",  list.files(paste0(i)), value = TRUE)
+  file2read <- grep("csv",  list.files(paste0("RawData/", i)), value = TRUE)
   for (j in 1:12) {
-    raw[[paste0(i)]][[j]] <- read.csv(paste0("RawData", i, "/", file2read[j]))
+    raw[[paste0(i)]][[j]] <- 
+      read.csv(paste0("RawData/", i, "/", file2read[j])) %>% 
+      as_tibble()
   }
 }
 
@@ -66,14 +91,164 @@ num_yr <- data.frame(
 # 构建年度数据
 raw_yr <- lapply(raw, function(x) Reduce(rbind, x))
 
+# 写出txt文件以供后续词频和共现分析
+if(set_txtexit == FALSE) {
+  for (i in names(raw_yr)) {
+    # 导入数据
+    twtdata_sub <- raw_yr[[i]]
+    
+    # 清洗推文数据
+    # Remove mentions, urls, emojis, numbers, punctuations, etc.
+    twtdata_sub$text <- gsub("@\\w+", "", twtdata_sub$text)
+    twtdata_sub$text <- gsub("https?://.+", "", twtdata_sub$text)
+    twtdata_sub$text <- gsub("\\d+\\w*\\d*", "", twtdata_sub$text)
+    twtdata_sub$text <- gsub("#\\w+", "", twtdata_sub$text)
+    twtdata_sub$text <- gsub("[[:punct:]]", " ", twtdata_sub$text)
+    twtdata_sub$text <- gsub("[0-9]", "", twtdata_sub$text)
+    
+    # 将推文写入*.txt文件
+    write(twtdata_sub$text, file = paste0("ProcData/TxtGen/", i, "_text.txt"))
+  }
+}
+
+## Twitter subset based on keyword ----
+# 提取包含特定关键词的推文
+raw_yr_gw <- fun_ls_gen(ana_yr)
+raw_yr_cc <- fun_ls_gen(ana_yr)
+
+for (i in as.character(ana_yr)) {
+  raw_yr_gw[[i]] <- 
+    subset(raw_yr[[i]], grepl("温暖化", raw_yr[[i]]$text))
+  raw_yr_cc[[i]] <- 
+    subset(raw_yr[[i]], grepl("気候変動", raw_yr[[i]]$text))
+}
+
+# 写出txt文件以供后续词频和共现分析
+for (i in ana_yr) {
+  # 导入数据
+  raw_yr_gw[[i]] %>% 
+    # 将推文写入*.txt文件
+    select(text) %>% 
+    write(file = paste0("ProcData/TxtGenGw/", i, "_text.txt"))
+}
+
+for (i in ana_yr) {
+  # 导入数据
+  raw_yr_cc[[i]] %>% 
+    # 将推文写入*.txt文件
+    select(text) %>% 
+    write(file = paste0("ProcData/TxtGenCc/", i, "_text.txt"))
+}
+
+# 函数：基于*.txt文件分析词频并且写入*.csv
+# 参数：
+# dirtxt：放油推文内容文本*.txt的文件夹
+# dircsv：生成*.csv后写入的路径
+fun_docdf_csv <- function(dirtxt, dircsv) {
+  for (i in ana_yr) {
+    freq <- 
+      docDF(target = paste0(dirtxt, i, "_text.txt"), 
+            type = 1, dic = userdic)
+    
+    # 进一步清除停止词
+    freq <- freq[freq$POS1 %in% c("名詞","動詞","形容詞") & 
+                   !(freq$POS2 %in% c("非自立","接尾", "数")) &
+                   !(freq$TERM %in% stopwords), ]
+    
+    # 归并相同的词语
+    names(freq)[length(freq)] <- "txt"
+    freq <- aggregate(txt ~ TERM, data = freq, sum)
+    # 按照出现次数排序
+    freq <- freq[order(freq$txt, decreasing = TRUE), ]
+    write.csv(freq, paste0(dircsv, i, "_docdf.csv"))
+  }
+}
+
+fun_docdf_csv(dirtxt = "ProcData/TxtGenGw/", dircsv = "ProcData/DocDfGw/")
+fun_docdf_csv(dirtxt = "ProcData/TxtGenCc/",dircsv = "ProcData/DocDfCc/")
+
+# 函数：基于词频*.csv文档生成每两年的词频*.csv文档
+# 参数：
+# dircsv：原始词频*.csv所存放的路径
+fun_docdf_csv_twoyr <- function(dircsv) {
+  # 生成以两年为间隔的词频文件
+  # 生成用于存储结果的空列表
+  freq_oneyr <- fun_ls_gen(ana_yr)
+  freq_twoyr <- fun_ls_gen(ana_yr[ana_yr %% 2 == 0])
+  
+  # 读取文件夹内所有词频*.csv文档
+  for (i in as.character(ana_yr)) {
+    freq_oneyr[[i]] <- 
+      read.csv(paste0(dircsv, i, "_docdf.csv")) %>% 
+      as_tibble() %>% 
+      arrange(-txt)
+  }
+  
+  # 按照两年为间隔合并
+  for (i in ana_yr[ana_yr %% 2 == 0]) {
+    freq_twoyr[[as.character(i)]] <- 
+      rbind(freq_oneyr[[as.character(i)]], 
+            freq_oneyr[[as.character(i + 1)]]) %>% 
+      group_by(TERM) %>% 
+      summarise(txt = sum(txt)) %>% 
+      ungroup() %>% 
+      arrange(-txt)
+  }
+  
+  # 写入*.csv文档
+  for (i in ana_yr[ana_yr %% 2 == 0]) {
+    write.csv(freq_twoyr[[as.character(i)]], 
+              file = paste0(dircsv, i, "-", i + 1, "_docdf.csv"))
+  }
+}
+
+fun_docdf_csv_twoyr("ProcData/DocDfCc/")
+fun_docdf_csv_twoyr("ProcData/DocDfGw/")
+
+
+
+
+
+# 生成十年期间混合的词频*.csv文档
+# 函数：基于词频*.csv文档生成每两年的词频*.csv文档
+# 参数：
+# dircsv：原始词频*.csv所存放的路径
+fun_docdf_csv_tenyr <- function(dircsv) {
+  # 生成用于存储结果的空列表
+  freq_oneyr <- fun_ls_gen(ana_yr)
+  
+  # 读取文件夹内所有词频*.csv文档
+  for (i in as.character(ana_yr)) {
+    freq_oneyr[[i]] <- 
+      read.csv(paste0(dircsv, i, "_docdf.csv")) %>% 
+      as_tibble() %>% 
+      arrange(-txt)
+  }
+  
+  # 将十年的数据合并
+  freq_tenyr <- Reduce(rbind, freq_oneyr) %>% 
+    group_by(TERM) %>% 
+    summarise(txt = sum(txt)) %>% 
+    ungroup() %>% 
+    arrange(-txt)
+  
+  
+  # 写入*.csv文档
+  write.csv(freq_tenyr, file = paste0(dircsv, "2012-2021_docdf.csv"))
+}
+
+fun_docdf_csv_tenyr("ProcData/DocDfCc/")
+fun_docdf_csv_tenyr("ProcData/DocDfGw/")
+
 ##. 气象数据 ----
 # 读取日本气象局下载的气候异常指标数据
-file2read <- list.files("JMA")
+file2read <- list.files("RawData/JMA")
 jma <- vector("list", length(file2read))
 names(jma) <- file2read
 
 for (i in 1:length(file2read)) {
-  jma[[i]] <- read.csv(paste0("JMA/", file2read[i]), fileEncoding = "Shift-JIS")
+  jma[[i]] <- read.csv(paste0("RawData/JMA/", file2read[i]), 
+                       fileEncoding = "Shift-JIS")
   names(jma[[i]]) <- c("year", gsub(".csv", "", file2read[i]))
 }
 
@@ -83,7 +258,7 @@ fun_merge <- function(x, y) {
 jma_df <- Reduce(fun_merge, jma)
 num_yr <- merge(num_yr, jma_df, by.x = "yr", by.y = "year")
 
-# 年度分析 ----
+# Yearly analysis ----
 ##. 概况可视化 ----
 num_yr <- merge(num_yr, read.csv("RawData/UserCount2012-2021.csv"), 
                 by.x = "yr", by.y = "X")
@@ -110,38 +285,6 @@ ggplot(temp_num_mth) +
 if(set_picexp) dev.off()
 
 ##. 词频分析和共现 ----
-# 设置停用词
-stopwords <- c(
-  "する","それ","なる","ない","そこ","これ","ある", "さん", "なん", "の", "ん", 
-  "いる", "思う", "そう", "れる", "くる", "考える", "言う", "ー", 
-  "できる", "てる", "でる", "世界の財界", 
-  "一", "いい", "何", "いう", "できる", "られる", 
-  "n", "RT", letters, LETTERS, 
-  "+", "<", ">", "><"
-)
-# 选择用户自定义词典
-userdic <- "/Users/Kang/Documents/R/GlobalWarmingTweet/kang.dic"
-
-# 写出txt文件以供后续词频和共现分析
-if(set_txtexit == FALSE) {
-  for (i in names(raw_yr)) {
-    # 导入数据
-    twtdata_sub <- raw_yr[[i]]
-    
-    # 清洗推文数据
-    # Remove mentions, urls, emojis, numbers, punctuations, etc.
-    twtdata_sub$text <- gsub("@\\w+", "", twtdata_sub$text)
-    twtdata_sub$text <- gsub("https?://.+", "", twtdata_sub$text)
-    twtdata_sub$text <- gsub("\\d+\\w*\\d*", "", twtdata_sub$text)
-    twtdata_sub$text <- gsub("#\\w+", "", twtdata_sub$text)
-    twtdata_sub$text <- gsub("[[:punct:]]", " ", twtdata_sub$text)
-    twtdata_sub$text <- gsub("[0-9]", "", twtdata_sub$text)
-    
-    # 将推文写入*.txt文件
-    write(twtdata_sub$text, file = paste0("ProcData/TxtGen/", i, "_text.txt"))
-  }
-}
-
 # 词频分析
 # 构建变量用于存放词频结果
 freq <- vector("list", length(raw_yr))
