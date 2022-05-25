@@ -1,6 +1,8 @@
 # Packages ----
 library(dplyr)
 library(ggplot2)
+library(showtext)
+showtext_auto()
 
 # Function ----
 # 函数：基于一个数据框，对3个变量作图
@@ -106,3 +108,27 @@ fun_plot3var(
   method = "non-mix"
 )
 dev.off()
+
+## Word freq month figures ----
+# 某月提及气候变动的词频
+png("ProcData/ForKansaiConf/12_21词频.png", 
+    width = 900, height = 500, res = 150)
+read.csv("RawData/CC_Freq12_21.csv") %>% 
+  as_tibble() %>% 
+  rename_with(tolower) %>% 
+  ggplot() + 
+  geom_col(aes(y = reorder(term, txt), x = txt)) + 
+  labs(y = "Word", x = "Frequency")
+dev.off()
+
+# 某月提及全球变暖的词频
+png("ProcData/ForKansaiConf/12_21词频.png", 
+    width = 900, height = 500, res = 150)
+read.csv("RawData/GW_Freq12_21.csv") %>% 
+  as_tibble() %>% 
+  rename_with(tolower) %>% 
+  ggplot() + 
+  geom_col(aes(y = reorder(term, txt), x = txt)) + 
+  labs(y = "Word", x = "Frequency")
+dev.off()
+
