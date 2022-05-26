@@ -137,3 +137,62 @@ Wf2020JanPart <- function(name.keyword) {
 }
 Wf2020JanPart("cc")
 Wf2020JanPart("gw")
+
+## Get 2021 events word freq *.csv ----
+# 目标日期字符串
+tar.date.1 <- paste0(rep("2021-10-", 5), 26:30)
+tar.date.2 <- paste0(rep("2021-11-0", 4), 2:5)
+tar.date.3 <- paste0(rep("2021-11-", 2), 16:17)
+
+# 构建目标数据集
+text.2021.parts <- read.csv("RawData/2021/jst202111lite.csv") %>% 
+  rbind(read.csv("RawData/2021/jst202110lite.csv")) %>% 
+  as_tibble() %>% 
+  mutate(date = substr(created_at, 1, 10)) 
+text.2021.part.1 <- text.2021.parts %>% 
+  subset(date %in% tar.date.1)
+text.2021.part.2 <- text.2021.parts %>% 
+  subset(date %in% tar.date.2)
+text.2021.part.3 <- text.2021.parts %>% 
+  subset(date %in% tar.date.3)
+
+# 将目标数据根据提及“”和“”进行分类，并且写出推文文本为*.txt文件
+WriteTxt2021 <- function(x, name.tar) {
+  x %>% 
+    subset(grepl("温暖化", text)) %>% 
+    .$text %>% 
+    write(file = paste0("ProcData/ForKansaiConf/Text_", name.tar, "_gw.txt"))
+  x %>% 
+    subset(grepl("気候変動", text)) %>% 
+    .$text %>% 
+    write(file = paste0("ProcData/ForKansaiConf/Text_", name.tar, "_cc.txt"))
+}
+
+WriteTxt2021(x = text.2021.part.1, name.tar =  "2021_part_1")
+WriteTxt2021(x = text.2021.part.2, name.tar =  "2021_part_2")
+WriteTxt2021(x = text.2021.part.3, name.tar =  "2021_part_3")
+
+# 读取*.txt文件并进行分词
+Wf2021Parts <- function(order.file, name.keyword) {
+  docDF(target = paste0("ProcData/ForKansaiConf/Text_2021_part_", order.file, 
+                        "_", name.keyword, ".txt"), 
+        type = 1, dic = userdic) %>% 
+    rename_with(~ c("term", "pos1", "pos2", "freq")) %>% 
+    subset(
+      pos1 %in% c("名詞","動詞","形容詞") & 
+        !(pos2 %in% c("非自立","接尾", "数")) &
+        !(term %in% stopwords)
+    ) %>% 
+    arrange(-freq) %>% 
+    write.csv(file = paste0("ProcData/ForKansaiConf/Wf_2021_part_", order.file, 
+                            "_", name.keyword, ".csv"))
+}
+
+Wf2021Parts(order.file = "1", name.keyword = "cc")
+Wf2021Parts(order.file = "1", name.keyword = "gw")
+
+Wf2021Parts(order.file = "2", name.keyword = "cc")
+Wf2021Parts(order.file = "2", name.keyword = "gw")
+
+Wf2021Parts(order.file = "3", name.keyword = "cc")
+Wf2021Parts(order.file = "3", name.keyword = "gw")
