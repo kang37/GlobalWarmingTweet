@@ -110,7 +110,7 @@ fun_plot3var(
 dev.off()
 
 ## Word freq month figures ----
-# 某月提及气候变动的词频
+# 十年间提及气候变动的词频
 png("ProcData/ForKansaiConf/12_21气候变动词频.png", 
     width = 900, height = 500, res = 150)
 read.csv("RawData/ForKansaiConfCC_Freq12_21.csv") %>% 
@@ -121,7 +121,7 @@ read.csv("RawData/ForKansaiConfCC_Freq12_21.csv") %>%
   labs(y = "Word", x = "Frequency")
 dev.off()
 
-# 某月提及全球变暖的词频
+# 十年间提及全球变暖的词频
 png("ProcData/ForKansaiConf/12_21全球变暖词频.png", 
     width = 900, height = 500, res = 150)
 read.csv("RawData/ForKansaiConfGW_Freq12_21.csv") %>% 
