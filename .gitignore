@@ -2,7 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
-File
-RawData/
 .DS_Store
+File/
+RawData/
 ProcData/
