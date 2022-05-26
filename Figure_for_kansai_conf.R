@@ -37,13 +37,13 @@ fun_plot3var <- function(
 
 # Data ---- 
 # 读取月度数据
-mth_data <- read.csv("RawData/TwAgg1201_2112.csv") %>% 
+mth_data <- read.csv("RawData/ForKansaiConfTwAgg1201_2112.csv") %>% 
   as_tibble() %>% 
   rename(date = Unnamed..0) %>% 
   mutate(date = as.character(date)) %>% 
   select(-X)
 # 读取年度数据
-yr_data <- read.csv("RawData/TwUser2012-2021.csv") %>% 
+yr_data <- read.csv("RawData/ForKansaiConfTwUser2012-2021.csv") %>% 
   as_tibble() %>% 
   rename(date = X) %>% 
   mutate(date = paste0(as.character(date), "06"))
@@ -113,7 +113,7 @@ dev.off()
 # 某月提及气候变动的词频
 png("ProcData/ForKansaiConf/12_21气候变动词频.png", 
     width = 900, height = 500, res = 150)
-read.csv("RawData/CC_Freq12_21.csv") %>% 
+read.csv("RawData/ForKansaiConfCC_Freq12_21.csv") %>% 
   as_tibble() %>% 
   rename_with(tolower) %>% 
   ggplot() + 
@@ -124,7 +124,7 @@ dev.off()
 # 某月提及全球变暖的词频
 png("ProcData/ForKansaiConf/12_21全球变暖词频.png", 
     width = 900, height = 500, res = 150)
-read.csv("RawData/GW_Freq12_21.csv") %>% 
+read.csv("RawData/ForKansaiConfGW_Freq12_21.csv") %>% 
   as_tibble() %>% 
   rename_with(tolower) %>% 
   ggplot() + 
