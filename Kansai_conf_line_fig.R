@@ -53,4 +53,3 @@ png("ProcData/ForKansaiConf/Rate_change_202110_202111.png",
   (ggplot(case.2021) + 
      geom_line(aes(x = date, y = verGW2CC))) 
 dev.off()
-
