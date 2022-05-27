@@ -210,7 +210,7 @@ fun_docdf_csv_twoyr <- function(dircsv, keyword) {
 fun_docdf_csv_twoyr("ProcData/DocDfCc/", keyword = "Cc")
 fun_docdf_csv_twoyr("ProcData/DocDfGw/", keyword = "Gw")
 
-# 函数：基于上一步的两年间隔词频*.csv文件生成排名前30的词频表格并写出
+# 函数：基于上一步的两年间隔词频*.csv文件生成排名前50的词频表格并写出
 fun_docdf_top_50 <- function(dir.file) {
   # 获得目标文件夹内所有文件名称
   name.file <- list.files(dir.file)
