@@ -241,6 +241,39 @@ fun_docdf_top_50 <- function(dir.file) {
 
 fun_docdf_top_50(dir.file = "ProcData/ForKansaiConf/DocDfTwoYr")
 
+fun_wf_top_event <- function(name.gwfile, name.ccfile, name.tar) {
+  # 提取极端事件期间的前几十名词频并输出
+  top50.gw <- 
+    read.csv(paste0("ProcData/ForKansaiConf/", name.gwfile)) %>% 
+    rename_with(~ c(name.gwfile, "term", "pos1", "pos2", "freq")) %>% 
+    select({{name.gwfile}}, term, freq) %>% 
+    subset(!term %in% stopwords) %>% 
+    head(50)
+  top50.cc <- 
+    read.csv(paste0("ProcData/ForKansaiConf/", name.ccfile)) %>% 
+    rename_with(~ c(name.ccfile, "term", "pos1", "pos2", "freq")) %>% 
+    select({{name.ccfile}}, term, freq) %>% 
+    subset(!term %in% stopwords) %>% 
+    head(50)
+  top50.com <- cbind(top50.gw, top50.cc)
+  # 导出文件
+  write.csv(top50.com, 
+            paste0("ProcData/ForKansaiConf/Top50_", name.tar, ".csv"))
+}
+
+fun_wf_top_event(name.gwfile = "Wf_202001_part_gw.csv", 
+                 name.ccfile = "Wf_202001_part_cc.csv", 
+                 name.tar = "202001_part")
+fun_wf_top_event(name.gwfile = "Wf_2021_part_1_gw.csv", 
+                 name.ccfile = "Wf_2021_part_1_cc.csv", 
+                 name.tar = "2021_part_1")
+fun_wf_top_event(name.gwfile = "Wf_2021_part_2_gw.csv", 
+                 name.ccfile = "Wf_2021_part_2_cc.csv", 
+                 name.tar = "2021_part_2")
+fun_wf_top_event(name.gwfile = "Wf_2021_part_3_gw.csv", 
+                 name.ccfile = "Wf_2021_part_3_cc.csv", 
+                 name.tar = "2021_part_3")
+
 # 生成十年期间混合的词频*.csv文档
 # 函数：基于词频*.csv文档生成每两年的词频*.csv文档
 # 参数：
