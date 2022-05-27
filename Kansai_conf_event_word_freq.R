@@ -2,6 +2,8 @@
 library(RMeCab)
 library(dplyr)
 library(ggplot2)
+library(igraph)
+library(ggraph)
 library(showtext)
 showtext_auto()
 
@@ -196,3 +198,57 @@ Wf2021Parts(order.file = "2", name.keyword = "gw")
 
 Wf2021Parts(order.file = "3", name.keyword = "cc")
 Wf2021Parts(order.file = "3", name.keyword = "gw")
+
+## Get 202001 co-occurrence ----
+# 函数：读取原始数据并将推文内容写出为*.txt文件
+Csv2Txt <- function(dir.csv, name.tar) {
+  # 读取文本*.csv文件
+  text.csv <- read.csv(dir.csv) %>% 
+    as_tibble()
+  
+  # 区分提及全球变暖和气候变化的推文
+  text.csv.gw <- subset(text.csv, grepl("温暖化", text))
+  text.csv.cc <- subset(text.csv, grepl("気候変動", text))
+  
+  # 将两类推文文本列的内容分别写入*.txt文件
+  write(text.csv.gw$text, paste0("ProcData/Txtgen/", name.tar, "_gw.txt"))
+  write(text.csv.cc$text, paste0("ProcData/Txtgen/", name.tar, "_cc.txt"))
+}
+Csv2Txt(dir.csv = "RawData/2020/jst202001lite.csv", name.tar = "202001")
+
+# 共现数据计算生成
+for (i in c("gw", "cc")) {
+  # 构建N-gram列表：
+  # 假设N=1，且只选取三类词性
+  # 待办：有些不需要的字符没有清理干净，影响共现判断
+  ngram <- 
+    docDF(target = paste0("ProcData/TxtGen/202001_", i, ".txt"), 
+          type = 1, pos = c("名詞", "形容詞", "動詞"), 
+          nDF = 1, N = 2, dic = userdic) %>% 
+    # 进一步去除停用词
+    subset(!N1 %in% stopwords) %>% 
+    subset(!N2 %in% stopwords) 
+  names(ngram)[5] <- "freq"
+  ngram <- ngram %>% 
+    arrange(-freq) %>% 
+    # 保留出现次数排名前50的连接
+    head(50)
+  
+  # 导出共现图
+  png(
+    filename = paste0("ProcData/ForKansaiConf/202001_", i, "_共现.png"), 
+    res = 300, # 300ppi 分辨率
+    width = 1600, height = 1600,
+    bg = "transparent" # 透明背景
+  )
+  # 提取作图数据
+  plotdata_ngram <- graph_from_data_frame(ngram)
+  # 作共现图
+  print(ggraph(ngram, layout = "fr") +
+          geom_edge_link(aes(edge_alpha = freq), show.legend = FALSE) +
+          geom_node_point(color = "lightblue", size = 5) +
+          geom_node_text(
+            aes(label = name), size = 3, repel=TRUE, family="HiraKakuProN-W3") +
+          theme_graph(base_size=12))
+  dev.off()
+}
