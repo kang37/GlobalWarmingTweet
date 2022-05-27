@@ -37,13 +37,13 @@ fun_plot3var <- function(
 
 # Data ---- 
 # 读取月度数据
-mth_data <- read.csv("RawData/ForKansaiConfTwAgg1201_2112.csv") %>% 
+mth_data <- read.csv("RawData/ForKansaiConf/TwAgg1201_2112.csv") %>% 
   as_tibble() %>% 
   rename(date = Unnamed..0) %>% 
   mutate(date = as.character(date)) %>% 
   select(-X)
 # 读取年度数据
-yr_data <- read.csv("RawData/ForKansaiConfTwUser2012-2021.csv") %>% 
+yr_data <- read.csv("RawData/ForKansaiConf/TwUser2012-2021.csv") %>% 
   as_tibble() %>% 
   rename(date = X) %>% 
   mutate(date = paste0(as.character(date), "06"))
@@ -57,6 +57,7 @@ plot_data_proc <- plot_data_ori %>%
     # 将推文数量单位转化为“x10000”
     tweet = tweet / 1000, 
     retweet = retweet / 1000, 
+    tweetNoRT = tweetNoRT / 1000, 
     refGW_sum = refGW_sum / 1000, 
     refCC_sum = refCC_sum / 1000, 
     # 将用于折线图的数据转化为差不多的数量级
@@ -74,7 +75,7 @@ png("ProcData/ForKansaiConf/无转推推文数_转推数_用户数.png",
 fun_plot3var(
   plot_data_proc, 
   name_var_1 = "tweet", 
-  name_var_2 = "retweet", 
+  name_var_2 = "tweetNoRT", 
   name_var_3 = "predicted.Number.of.Users", 
   times_axia_right = 0.01, 
   name_yaxis_left = "Number of tweet (x1000)", 
