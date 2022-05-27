@@ -114,7 +114,7 @@ dev.off()
 # 十年间提及气候变动的词频
 png("ProcData/ForKansaiConf/12_21气候变动词频.png", 
     width = 900, height = 500, res = 150)
-read.csv("RawData/ForKansaiConfCC_Freq12_21.csv") %>% 
+read.csv("RawData/ForKansaiConf/CC_Freq12_21.csv") %>% 
   as_tibble() %>% 
   rename_with(tolower) %>% 
   ggplot() + 
@@ -125,7 +125,7 @@ dev.off()
 # 十年间提及全球变暖的词频
 png("ProcData/ForKansaiConf/12_21全球变暖词频.png", 
     width = 900, height = 500, res = 150)
-read.csv("RawData/ForKansaiConfGW_Freq12_21.csv") %>% 
+read.csv("RawData/ForKansaiConf/GW_Freq12_21.csv") %>% 
   as_tibble() %>% 
   rename_with(tolower) %>% 
   ggplot() + 
