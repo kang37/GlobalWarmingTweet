@@ -170,7 +170,7 @@ fun_docdf_csv(dirtxt = "ProcData/TxtGenCc/",dircsv = "ProcData/DocDfCc/")
 # 函数：基于词频*.csv文档生成每两年的词频*.csv文档
 # 参数：
 # dircsv：原始词频*.csv所存放的路径
-fun_docdf_csv_twoyr <- function(dircsv) {
+fun_docdf_csv_twoyr <- function(dircsv, keyword) {
   # 生成以两年为间隔的词频文件
   # 生成用于存储结果的空列表
   freq_oneyr <- fun_ls_gen(ana_yr)
@@ -180,8 +180,7 @@ fun_docdf_csv_twoyr <- function(dircsv) {
   for (i in as.character(ana_yr)) {
     freq_oneyr[[i]] <- 
       read.csv(paste0(dircsv, i, "_docdf.csv")) %>% 
-      as_tibble() %>% 
-      arrange(-txt)
+      as_tibble()
   }
   
   # 按照两年为间隔合并
@@ -197,23 +196,24 @@ fun_docdf_csv_twoyr <- function(dircsv) {
   
   # 写入*.csv文档
   for (i in ana_yr[ana_yr %% 2 == 0]) {
-    write.csv(freq_twoyr[[as.character(i)]], 
-              file = paste0(dircsv, i, "-", i + 1, "_docdf.csv"))
+    name_col <- as.character(i)
+    freq_twoyr %>% 
+      .[[name_col]] %>% 
+      write.csv(
+        x = ., 
+        file = paste0("ProcData/ForKansaiConf/DocDf/", 
+                      keyword, "_", i, "-", i + 1, "_docdf.csv"))
   }
 }
 
-fun_docdf_csv_twoyr("ProcData/DocDfCc/")
-fun_docdf_csv_twoyr("ProcData/DocDfGw/")
-
-
-
-
+fun_docdf_csv_twoyr("ProcData/DocDfCc/", keyword = "Cc")
+fun_docdf_csv_twoyr("ProcData/DocDfGw/", keyword = "Gw")
 
 # 生成十年期间混合的词频*.csv文档
 # 函数：基于词频*.csv文档生成每两年的词频*.csv文档
 # 参数：
 # dircsv：原始词频*.csv所存放的路径
-fun_docdf_csv_tenyr <- function(dircsv) {
+fun_docdf_csv_tenyr <- function(dircsv, keyword) {
   # 生成用于存储结果的空列表
   freq_oneyr <- fun_ls_gen(ana_yr)
   
@@ -229,16 +229,18 @@ fun_docdf_csv_tenyr <- function(dircsv) {
   freq_tenyr <- Reduce(rbind, freq_oneyr) %>% 
     group_by(TERM) %>% 
     summarise(txt = sum(txt)) %>% 
-    ungroup() %>% 
-    arrange(-txt)
+    ungroup()
   
-  
-  # 写入*.csv文档
-  write.csv(freq_tenyr, file = paste0(dircsv, "2012-2021_docdf.csv"))
+  # 写入*.csv文档freq_tenyr
+  freq_tenyr %>% 
+    arrange(-txt) %>% 
+    write.csv(x = ., 
+              file = paste0("ProcData/ForKansaiConf/DocDf/", 
+                            keyword, "_tenyr_", "2012-2021_docdf.csv"))
 }
 
-fun_docdf_csv_tenyr("ProcData/DocDfCc/")
-fun_docdf_csv_tenyr("ProcData/DocDfGw/")
+fun_docdf_csv_tenyr("ProcData/DocDfCc/", keyword = "Cc")
+fun_docdf_csv_tenyr("ProcData/DocDfGw/", keyword = "Gw")
 
 ##. 气象数据 ----
 # 读取日本气象局下载的气候异常指标数据
