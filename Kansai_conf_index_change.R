@@ -53,3 +53,25 @@ png("ProcData/ForKansaiConf/Rate_change_202110_202111.png",
   (ggplot(case.2021) + 
      geom_line(aes(x = date, y = verGW2CC))) 
 dev.off()
+
+## Monthly index change from 2012-2021 ----
+nort.gw.cc <- read.csv("RawData/ForKansaiConf/twAgg201201_202112_nort.csv") %>% 
+  as_tibble()
+png("ProcData/ForKansaiConf/Nort_gw_cc_rate_2012_2021.png", 
+    width = 900, height = 500, res = 150)
+ggplot(nort.gw.cc) + 
+  geom_line(aes(1 : nrow(nort.gw.cc), NoRT_GWtoCC)) + 
+  labs(x = "")
+dev.off()
+
+nort <- read.csv("RawData/ForKansaiConf/twCount201201_202112_nort.csv") %>% 
+  as_tibble()
+png("ProcData/ForKansaiConf/Nort_gw_cc_2012_2021.png", 
+    width = 900, height = 500, res = 150)
+(ggplot(nort) + 
+    geom_line(aes(1 : nrow(nort.gw.cc), NoRT_GW_sum)) + 
+  labs(x = "")) / 
+  (ggplot(nort) + 
+     geom_line(aes(1 : nrow(nort.gw.cc), NoRT_CC_sum)) + 
+     labs(x = ""))
+dev.off()
