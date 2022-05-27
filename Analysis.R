@@ -42,7 +42,8 @@ stopwords <- c(
   "いる", "思う", "そう", "れる", "くる", "考える", "言う", "ー", 
   "できる", "てる", "でる", "世界の財界", "一", "いい", "何", "いう", "できる", 
   "られる", "n", "RT", letters, LETTERS, 
-  "+", "<", ">", "><", "!!", "#", "!?", "@", "(", "/", "\\"
+  "+", "<", ">", "><", "!!", "#", "!?", "@", "(", "/", "\\", ".", "/", "://", 
+  "co", ":", "CO", ")", "-", "_", "http"
 )
 
 # 选择用户自定义词典
@@ -201,13 +202,44 @@ fun_docdf_csv_twoyr <- function(dircsv, keyword) {
       .[[name_col]] %>% 
       write.csv(
         x = ., 
-        file = paste0("ProcData/ForKansaiConf/DocDf/", 
+        file = paste0("ProcData/ForKansaiConf/", 
                       keyword, "_", i, "-", i + 1, "_docdf.csv"))
   }
 }
 
 fun_docdf_csv_twoyr("ProcData/DocDfCc/", keyword = "Cc")
 fun_docdf_csv_twoyr("ProcData/DocDfGw/", keyword = "Gw")
+
+# 函数：基于上一步的两年间隔词频*.csv文件生成排名前30的词频表格并写出
+fun_docdf_top_50 <- function(dir.file) {
+  # 获得目标文件夹内所有文件名称
+  name.file <- list.files(dir.file)
+  # 将文件夹名称根据提及关键词分为两拨
+  name.file.gw <- name.file[grepl("Gw", name.file)]
+  name.file.cc <- name.file[grepl("Cc", name.file)]
+  
+  # 对两个关键词分别提取前50名词频并写出为*.csv
+  for (i in 1:5) {
+    top50.gw <- 
+      read.csv(paste0("ProcData/ForKansaiConf/DocDfTwoYr/", 
+                      name.file.gw[i])) %>% 
+      rename_with(~ c(name.file.gw[i], "term", "freq")) %>% 
+      subset(!term %in% stopwords) %>% 
+      head(50)
+    top50.cc <- 
+      read.csv(paste0("ProcData/ForKansaiConf/DocDfTwoYr/", 
+                      name.file.cc[i])) %>% 
+      rename_with(~ c(name.file.cc[i], "term", "freq")) %>% 
+      subset(!term %in% stopwords) %>% 
+      head(50)
+    top50.com <- cbind(top50.gw, top50.cc)
+    # 导出文件
+    write.csv(top50.com, 
+              paste0("ProcData/ForKansaiConf/DocDfTwoYrTop/Top50_", i, ".csv"))
+  }
+}
+
+fun_docdf_top_50(dir.file = "ProcData/ForKansaiConf/DocDfTwoYr")
 
 # 生成十年期间混合的词频*.csv文档
 # 函数：基于词频*.csv文档生成每两年的词频*.csv文档
@@ -235,7 +267,7 @@ fun_docdf_csv_tenyr <- function(dircsv, keyword) {
   freq_tenyr %>% 
     arrange(-txt) %>% 
     write.csv(x = ., 
-              file = paste0("ProcData/ForKansaiConf/DocDf/", 
+              file = paste0("ProcData/ForKansaiConf/DocDfTwoYr/", 
                             keyword, "_tenyr_", "2012-2021_docdf.csv"))
 }
 
