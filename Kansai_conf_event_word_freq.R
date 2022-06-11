@@ -112,7 +112,7 @@ text.202001.part <- read.csv("RawData/2020/jst202001lite.csv") %>%
   mutate(date = substr(created_at, 1, 10)) %>% 
   subset(date %in% tar.date)
 
-# 将目标数据根据提及“”和“”进行分类，并且写出推文文本为*.txt文件
+# 将目标数据根据提及“温暖化”和“気候変動”进行分类，并且写出推文文本为*.txt文件
 text.202001.part %>% 
   subset(grepl("温暖化", text)) %>% 
   .$text %>% 
@@ -252,3 +252,18 @@ for (i in c("gw", "cc")) {
           theme_graph(base_size=12))
   dev.off()
 }
+
+## Get separated words of text ----
+# 测试：将其中一个月的各条推文文本分解成用逗号分隔的分词
+# 函数：将日语字符串分解成逗号分隔的分词
+# 参数：
+# x：日语字符串
+SepWord <- function(x) {
+  words <- RMeCabC(x) %>% unlist()
+  words.output <- paste(words, collapse = ",")
+  return(words.output)
+}
+text.202001.part.sepword <- text.202001.part %>% 
+  mutate(sepword = apply(text.202001.part["text"], 1, SepWord))
+write.csv(text.202001.part.sepword, 
+          "ProcData/ForKansaiConf/Text_202001_part_sepword.csv")
