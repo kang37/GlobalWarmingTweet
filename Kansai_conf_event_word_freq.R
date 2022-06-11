@@ -17,7 +17,7 @@ stopwords <- c(
   "いる", "思う", "そう", "れる", "くる", "考える", "言う", "ー", 
   "できる", "てる", "でる", "世界の財界", "一", "いい", "何", "いう", "できる", 
   "られる", "n", "RT", letters, LETTERS, 
-  "+", "<", ">", "><", "!!", "#", "!?", "@", "(", "/", "\\"
+  "+", "<", ">", "><", "!!", "#", "!?", "@", "(", "/", "\\", "://"
 )
 
 # Analysis ----
@@ -254,16 +254,24 @@ for (i in c("gw", "cc")) {
 }
 
 ## Get separated words of text ----
-# 测试：将其中一个月的各条推文文本分解成用逗号分隔的分词
 # 函数：将日语字符串分解成逗号分隔的分词
 # 参数：
 # x：日语字符串
 SepWord <- function(x) {
-  words <- RMeCabC(x) %>% unlist()
+  # 对各条推文进行分词
+  words <- RMeCabC(str = x, dic = userdic) %>% 
+    unlist() %>% 
+    .[!. %in% stopwords]  # 去除停用词
+  # 将分词合成字符串并用逗号区隔开
   words.output <- paste(words, collapse = ",")
   return(words.output)
 }
-text.202001.part.sepword <- text.202001.part %>% 
-  mutate(sepword = apply(text.202001.part["text"], 1, SepWord))
-write.csv(text.202001.part.sepword, 
-          "ProcData/ForKansaiConf/Text_202001_part_sepword.csv")
+
+# 测试：将其中一个月的各条推文文本分解成用逗号分隔的分词
+test.202001 <- read.csv("RawData/ForKansaiConf/test_Clr202001lite.csv") %>% 
+  as_tibble()
+test.202001.sepword <- test.202001 %>% 
+  subset(textClr != "") %>% # 去除推文为空的行
+  mutate(sepword = apply(.["textClr"], 1, SepWord))
+write.csv(test.202001.sepword, 
+          "ProcData/ForKansaiConf/Test_202001_sepword.csv")
