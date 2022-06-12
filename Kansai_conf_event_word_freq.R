@@ -258,9 +258,11 @@ for (i in c("gw", "cc")) {
 # 参数：
 # x：日语字符串
 SepWord <- function(x) {
-  # 对各条推文进行分词
-  words <- RMeCabC(str = x, dic = userdic) %>% 
+  # 对一条推文进行分词
+  words <- gsub("[[:punct:]]", "", x) %>%  # 去除原文中的英文标点符号
+    RMeCabC(str = ., dic = userdic) %>%  # 进行分词
     unlist() %>% 
+    .[names(.) != "記号"] %>%  # 去除日语标点符号
     .[!. %in% stopwords]  # 去除停用词
   # 将分词合成字符串并用逗号区隔开
   words.output <- paste(words, collapse = ",")
@@ -272,6 +274,7 @@ test.202001 <- read.csv("RawData/ForKansaiConf/test_Clr202001lite.csv") %>%
   as_tibble()
 test.202001.sepword <- test.202001 %>% 
   subset(textClr != "") %>% # 去除推文为空的行
+  subset(textClr != " ") %>% # 去除推文为空格的行
   mutate(sepword = apply(.["textClr"], 1, SepWord))
 write.csv(test.202001.sepword, 
           "ProcData/ForKansaiConf/Test_202001_sepword.csv")
