@@ -262,19 +262,40 @@ SepWord <- function(x) {
   words <- gsub("[[:punct:]]", "", x) %>%  # 去除原文中的英文标点符号
     RMeCabC(str = ., dic = userdic) %>%  # 进行分词
     unlist() %>% 
-    .[names(.) != "記号"] %>%  # 去除日语标点符号
+    .[names(.) %in% c("名詞", "動詞", "形容詞")] %>%  # 去除日语标点符号
     .[!. %in% stopwords]  # 去除停用词
   # 将分词合成字符串并用逗号区隔开
   words.output <- paste(words, collapse = ",")
   return(words.output)
 }
 
-# 测试：将其中一个月的各条推文文本分解成用逗号分隔的分词
-test.202001 <- read.csv("RawData/ForKansaiConf/test_Clr202001lite.csv") %>% 
-  as_tibble()
-test.202001.sepword <- test.202001 %>% 
-  subset(textClr != "") %>% # 去除推文为空的行
-  subset(textClr != " ") %>% # 去除推文为空格的行
-  mutate(sepword = apply(.["textClr"], 1, SepWord))
+# 函数：将各条推文文本分解成用逗号分隔的分词
+# 参数：
+# dir：包含初步清洗后的推文列“textClr”的文件路径
+ApplySepWord <- function(dir) {
+  # 读取包含推文内容的文件
+  test.ori <- read.csv(dir) %>% 
+    as_tibble()
+  # 进行分词
+  test.sepword <- test.ori %>% 
+    subset(textClr != "") %>% # 去除推文为空的行
+    subset(textClr != " ") %>% # 去除推文为空格的行
+    mutate(sepword = apply(.["textClr"], 1, SepWord))
+  return(test.sepword)
+}
+
+# 对各月份进行分词
+test.202001.sepword <- 
+  ApplySepWord("RawData/ForKansaiConf/test_Clr202001lite.csv")
 write.csv(test.202001.sepword, 
           "ProcData/ForKansaiConf/Test_202001_sepword.csv")
+
+test.202110.sepword <- 
+  ApplySepWord("RawData/ForKansaiConf/test_Clr202110lite.csv")
+write.csv(test.202110.sepword, 
+          "ProcData/ForKansaiConf/Test_202110_sepword.csv")
+
+test.202111.sepword <- 
+  ApplySepWord("RawData/ForKansaiConf/test_Clr202111lite.csv")
+write.csv(test.202111.sepword, 
+          "ProcData/ForKansaiConf/Test_202111_sepword.csv")
