@@ -1,0 +1,134 @@
+---
+title: "推文波峰报告"
+author: "Kang"
+date: "2022-12-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+原数据中，每天的推文强度跟90%、85%、80%、75%分位推文强度高值的比较如下图。有些波峰特别高，为了方便查看，对纵轴取了对数。反正这个图没什么动用就是了，看看就好了。
+
+```{r}
+ggplot(tw.ana) + 
+  geom_line(aes(date, log(perhk))) + 
+  geom_line(aes(date, log(int_val)), col = "pink") + 
+  facet_grid(int_idx ~ dt_set, scales = "free") 
+```
+
+然后对全口径、全球变暖口径、气候变化口径，分别鉴别出每年不同标准下高值的日期。
+其中，每个格子代表一个日期，绿色表示超过该口径下该高值基准线。三个图从上到下分别代表全口径、全球变暖口径、气候变化口径。
+
+```{r}
+subset(tw.ana, dt_set = "tw") %>% 
+  ggplot() + 
+  geom_tile(aes(as.factor(month), day, fill = comp)) + 
+  theme(axis.text.x = element_text(angle = 90)) + 
+  facet_grid(year ~ int_idx)
+subset(tw.ana, dt_set = "gw") %>% 
+  ggplot() + 
+  geom_tile(aes(as.factor(month), day, fill = comp)) + 
+  theme(axis.text.x = element_text(angle = 90)) + 
+  facet_grid(year ~ int_idx)
+subset(tw.ana, dt_set = "cc") %>% 
+  ggplot() + 
+  geom_tile(aes(as.factor(month), day, fill = comp)) + 
+  theme(axis.text.x = element_text(angle = 90)) + 
+  facet_grid(year ~ int_idx)
+```
+
+再计算这些口径下，不同分位数情况下，高值日期推文数的条数，和占总各口径总推文数比例。条数为：
+
+```{r}
+pivot_wider(
+  tw.sum, 
+  id_cols = "int_idx", 
+  names_from = "dt_set", 
+  values_from = "up_num"
+) %>% 
+  knitr::kable()
+```
+
+比例为：
+
+```{r}
+tw.sum %>% 
+  left_join(
+    tw.num %>% 
+      group_by(dt_set) %>% 
+      summarise(num = sum(num)) %>% 
+      ungroup(), 
+    by = "dt_set"
+  ) %>% 
+  mutate(prop = up_num / num) %>% 
+  pivot_wider(
+    id_cols = int_idx, 
+    names_from = dt_set, 
+    values_from = prop
+  ) %>% 
+  knitr::kable()
+```
+
+挑选出连续高值天数大于3天的日期段的头一个日期，比如如果1月3日-6日连续高值，则连续天数为4天，挑出来的日期为1鱼人3日。
+结果发现，最大连续天数为15天；以连续3、4或5天的最多（分布频数如下图）。如果要保留峰值事件数为30左右个，应该选择连续天数大于等于6的部分。
+
+```{r}
+table(tw.highcontinue$dt_set, tw.highcontinue$high_days)
+```
+
+将这些起点日期表示在之前的90%高值日期图中：
+
+```{r fig.height=15}
+subset(tw.ana, int_idx == "int90") %>% 
+  ggplot() + 
+  geom_tile(aes(as.factor(month), day, fill = comp), alpha = 0.3) + 
+  theme(axis.text.x = element_text(angle = 90)) + 
+  geom_tile(data = tw.highcontinue, aes(as.factor(month), day, fill = comp)) +
+  facet_grid(year ~ dt_set)
+```
+
+上图对应的数据为，其中“TRUE”为该口径下该日期为高值起点日期：
+
+```{r}
+tw.highcontinue %>% 
+  select(date, dt_set) %>% mutate(val = TRUE) %>% 
+  pivot_wider(id_cols = date, names_from = dt_set, values_from = val) %>% 
+  mutate(tw_gw_cc = (tw + gw + cc) == 3, 
+         tw_gw = (tw + gw) == 2, 
+         tw_cc = (tw + cc) == 2, 
+         gw_gw = (gw + gw) == 2) %>% 
+  knitr::kable()
+```
+
+通过可视化，可以看出CC和GW及TW的表现有所不同，3者同时为高值的情况很罕见。此外，图中的数字表示该起点日期对应的高值天数。
+
+```{r fig.height=10}
+tw.highcontinue %>% 
+  ungroup() %>% 
+  subset(high_days >= 3) %>% 
+  ggplot() + 
+  geom_tile(aes(dt_set, date, fill = comp)) + 
+  facet_wrap(.~ year, scales = "free")
+```
+
+另外，关于要选择连续几天高值作为分析对象：目前选择的是3天及以上就算峰值。下图展示3个口径下，超过n天连续高值的峰值数所占比例。从数字来看，如果照目前标准（3天以上），GW和TW均有40左右个峰值；如果把范围限制在4天及以上，那CC就有22个左右峰值，GW和TW就是28左右个峰值。
+
+```{r}
+tw.highcontinue %>% 
+  ungroup() %>% 
+  subset(high_days >= 3) %>% 
+  # 添加作图辅助日期
+  mutate(date_dummy = as.Date(paste("9999", month, day, sep = "-"))) %>% 
+  ggplot() + 
+  geom_tile(aes(date_dummy, dt_set), fill = "darkred") + 
+  theme_bw() +
+  theme(axis.ticks.x = element_blank(),
+        panel.grid = element_blank()) +
+  scale_x_date(date_labels = "%b") + 
+  scale_y_discrete(breaks = c("tw", "gw", "cc"), 
+                   labels = c("Total", "Global Warming", "Climate Change")) + 
+  labs(x = "Dataset", y = "Date") + 
+  facet_wrap(.~ year, ncol = 1, strip.position = "right")
+```

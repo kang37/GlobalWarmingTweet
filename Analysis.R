@@ -444,7 +444,7 @@ for (i in names(raw_yr)) {
   dev.off()
 }
 
-##. 分词频率历史变化 ----
+##.分词频率历史变化 ----
 # 待办：尚未测试
 # 词频数据标准化
 freq_std <- lapply(freq, function(x) {
