@@ -6,10 +6,9 @@ library(lubridate)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
-library(plotly)
 
 # Read data ----
-tw.num <- read.csv("tw_Tdif_user12_22.csv") %>% 
+tw.num <- read.csv("RawData/tw_Tdif_user12_22.csv") %>% 
   tibble() %>% 
   rename_with(tolower) %>% 
   rename(num_tw = agg, num_gw = refgw, num_cc = refcc) %>% 
@@ -199,35 +198,33 @@ tw.sum %>%
 
 # Dates with continue high value days ----
 # 以90%为准，挑选连续3天或以上均为高值的日期
-tw.highcontinue <- tw.ana %>% 
+tw.conthigh <- tw.ana %>% 
   subset(int_idx == "int90") %>% 
   arrange(dt_set, year, month, day, comp) %>% 
   # 漏洞：只有在日期连续的情况下才可以用这个算法进行分组
   mutate(comp_oppo = !comp) %>% 
   mutate(grp = cumsum(comp_oppo)) %>% 
   subset(comp) %>% 
-  select(-comp_oppo) %>% 
   group_by(grp) %>% 
   # 计算是第几个连续天数，以及总连续天数，以此作为之后的筛选基准
   mutate(nth_day = row_number(), 
          high_days = max(nth_day)) %>% 
   ungroup() %>% 
-  # 如果要挑出连续高值天数大于3天的头一个日期，则设置判断条件如下
-  subset(nth_day == 1 & high_days >= 3)
-
-# 将起点日期添加到90%高值日期分布图中 
-ggplot() + 
-  geom_tile(data = subset(tw.ana, int_idx == "int90"), 
-            aes(as.factor(month), day, fill = comp), alpha = 0.5) + 
-  geom_tile(data = tw.highcontinue, 
-            aes(as.factor(month), day), fill = "darkgreen") +
-  theme(axis.text.x = element_text(angle = 90)) + 
-  facet_grid(year ~ dt_set)
+  # 挑出连续高值天数大于3天的日期
+  subset(high_days >= 3) %>% 
+  # 基于每个峰值期的起点日期重命名分组名称
+  group_by(grp) %>% 
+  mutate(
+    year_min = min(year), 
+    month_min = min(month), 
+    day_min = min(day), 
+    peak_grp = paste0(year_min, month_min, day_min)
+  ) %>% 
+  ungroup() %>% 
+  select(-c(int_idx, int_val, comp_oppo, year_min, month_min, day_min, grp))
 
 # 查看高值在3个口径中的重合情况
-tw.highcontinue %>% 
-  ungroup() %>% 
-  subset(high_days >= 3) %>% 
+tw.conthigh %>% 
   # 添加作图辅助日期
   mutate(date_dummy = as.Date(paste("9999", month, day, sep = "-"))) %>% 
   ggplot() + 
