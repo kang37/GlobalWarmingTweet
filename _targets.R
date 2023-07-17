@@ -71,7 +71,7 @@ list(
     ) %>% 
       do.call(rbind, .)
   ), 
-  # Change of daily tweet number per 10000 users. 
+  # Change of daily tweet number per 10 thousand users. 
   tar_target(
     general_plot_dt, 
     csv %>% 
@@ -79,7 +79,7 @@ list(
       summarise(
         tw_num = n(), 
         usr_num = length(unique(author_id)), 
-        tw_int = tw_num / usr_num * 10000
+        tw_int = tw_num / usr_num * 100000
       ) %>% 
       ungroup()
   ), 
