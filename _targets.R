@@ -6,14 +6,15 @@ get_event <-
   function(csv_x, quant_x) {
     csv_x %>% 
       # Number of tweets for each day. 
-      group_by(year, month, date) %>% 
+      group_by(year, month, date, annual_user) %>% 
       summarise(tw_num = n()) %>% 
       ungroup() %>% 
-      # Highlight the high-tweet-number date: compared with annual 90% quantile tweet number. 
+      mutate(tw_int = tw_num / annual_user) %>% 
+      # Highlight the high-tweet-number date: compared with annual 90% quantile tweet number intensity. 
       group_by(year) %>% 
-      mutate(quant = quantile(tw_num, quant_x)) %>% 
+      mutate(quant = quantile(tw_int, quant_x)) %>% 
       ungroup() %>% 
-      filter(tw_num >= quant) %>% 
+      filter(tw_int >= quant) %>% 
       arrange(year, date) %>% 
       mutate(
         date_backward = lag(date, 1), 
