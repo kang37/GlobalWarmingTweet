@@ -1,0 +1,30 @@
+---
+title: "Event network analysis"
+author: "Kang"
+format: html
+editor: visual
+---
+
+分析对象是两个事件：\"大米\"（rice），\"酷暑\"（hot）。两个事件的核心用户如下，包含度量中心度高值用户、中介中心度高值用户、综合高值用户（同时拥有高用户中心度和高中介中心度；这里这样分组计算比较简便，但是需要的话，也可以区分开）。随函附赠该信息的表格附件。
+
+```{r}
+cen_user <- 
+lapply(
+  graph_cen, 
+  function(x) filter(x, mvp_grp != "no_mvp")
+)
+knitr::kable(cen_user[[1]])
+knitr::kable(cen_user[[2]])
+```
+
+两个事件的网络图如下，展示核心用户在网络中的位置。
+
+```{r}
+net_plot_cen
+```
+
+网络的community划分如下。
+
+```{r}
+net_plot_comm
+```
