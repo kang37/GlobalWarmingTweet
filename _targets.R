@@ -60,7 +60,7 @@ list(
       # Turn unit into people. 
       mutate(annual_user = annual_user * 1000)
   ), 
-  # Get corpus based on tweet data in *.csv files
+  # Get tweet data based on tweet data in *.csv files
   tar_target(
     csv, 
     lapply(
@@ -95,11 +95,6 @@ list(
         tw_int = tw_num / annual_user * 100000
       ) %>% 
       ungroup()
-  ), 
-  # Corpus. 
-  tar_target(
-    corp, 
-    corpus(csv, text_field = "text")
   ), 
   # The event-identification: continue date with high-tweet-number. 
   tar_target(
