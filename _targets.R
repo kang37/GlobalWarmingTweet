@@ -94,11 +94,19 @@ list(
         data.table::fread("data_raw/tweet_event/202207.csv")
       )  %>% 
         tibble() %>% 
-        mutate(date = as_date(created_at)) %>% 
+        mutate(
+          date = as_date(created_at), 
+          author_id = as.character(author_id), 
+          retweeted_user_id = as.character(retweeted_user_id)
+        ) %>%  
         filter(date >= as_date("20220625"), date <= as_date("20220702")), 
       data.table::fread("data_raw/tweet_event/202110.csv") %>% 
         tibble() %>% 
-        mutate(date = as_date(created_at)) %>% 
+        mutate(
+          date = as_date(created_at), 
+          author_id = as.character(author_id), 
+          retweeted_user_id = as.character(retweeted_user_id)
+        ) %>%  
         filter(date >= as_date("20211025"), date <= as_date("20211031"))
     ) %>% 
       setNames(c("rice", "hot"))
