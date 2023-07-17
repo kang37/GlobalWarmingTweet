@@ -188,20 +188,35 @@ list(
           rename(from = retweeted_user_id, to = author_id) %>% 
           as_tbl_graph() %>% 
           activate(nodes) %>% 
-          left_join(graph_cen[[x]], by = "name")
+          left_join(graph_cen[[x]], by = "name") %>% 
+          # Community detection. 
+          # Bug: Need to figure out the best community-detection function for this case. Besides, this detection is based on filtered nodes, rather than raw data - if raw data is used, there will be too many communities. 
+          mutate(community = as.factor(group_components()))
       }
     ) %>% 
       setNames(names(csv_event))
   ), 
   # Netword plots. 
   tar_target(
-    net_plot, 
+    net_plot_cen, 
     lapply(
       graph, 
       function(x) {
         ggraph(x, layout = 'kk') + 
           geom_edge_link(alpha = 0.3) + 
           geom_node_point(aes(size = cen_degree, col = mvp_grp), alpha = 0.9) + 
+          geom_node_label(aes(label = mvp_id), size = 2, alpha = 0.5)
+      }
+    )
+  ), 
+  tar_target(
+    net_plot_comm, 
+    lapply(
+      graph, 
+      function(x) {
+        ggraph(x, layout = 'kk') + 
+          geom_edge_link(alpha = 0.3) + 
+          geom_node_point(aes(size = cen_degree, col = community), alpha = 0.9) + 
           geom_node_label(aes(label = mvp_id), size = 2, alpha = 0.5)
       }
     )

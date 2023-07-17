@@ -7,7 +7,8 @@ tar_make()
 tar_load(tw_high_90)
 tar_load(tw_high_85)
 tar_load(graph_cen)
-tar_load(net_plot)
+tar_load(net_plot_cen)
+tar_load(net_plot_comm)
 
 # Analysis ----
 ## Identify peak event ----
@@ -67,5 +68,7 @@ lapply(
   graph_cen, 
   function(x) filter(x, mvp_grp != "no_mvp")
 )
-# Network plots
-net_plot
+# Network plots with centrality information. 
+net_plot_cen
+# Network plots with community information. 
+net_plot_comm
