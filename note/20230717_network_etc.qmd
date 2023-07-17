@@ -1,0 +1,85 @@
+---
+title: "Event network analysis"
+author: "Kang"
+format: html
+editor: visual
+---
+
+分析对象是两个事件："大米"（rice），"酷暑"（hot）。计算了两个事件中所有用户的度量中心度（Degree centrality）、中介中心度（Betweenness centrality）。其中，大米事件的前10位度量中心度高值用户如下。
+
+```{r}
+graph_cen[[1]] %>% 
+  arrange(-cen_degree) %>% 
+  select(retweeted_userid = name, retweeted_username = author_username, cen_degree) %>% 
+  head(10) %>% 
+  knitr::kable()
+```
+
+大米事件中介中心度前10位如下。
+
+```{r}
+graph_cen[[1]] %>% 
+  arrange(-cen_between) %>% 
+  select(retweeted_userid = name, retweeted_username = author_username, cen_between) %>% 
+  head(10) %>% 
+  knitr::kable()
+```
+
+酷暑事件度量中心度前10位如下。
+
+```{r}
+graph_cen[[2]] %>% 
+  arrange(-cen_degree) %>% 
+  select(retweeted_userid = name, retweeted_username = author_username, cen_degree) %>% 
+  head(10) %>% 
+  knitr::kable()
+```
+
+酷暑事件中介中心度前10位如下。
+
+```{r}
+graph_cen[[2]] %>% 
+  arrange(-cen_between) %>% 
+  select(retweeted_userid = name, retweeted_username = author_username, cen_between) %>% 
+  head(10) %>% 
+  knitr::kable()
+```
+
+两个事件的网络图如下，community以颜色区分，并且展示中心用户在网络中的位置，标签为账户名（就是艾特后面那串）。对于数据库中无对应账户名的，以空标签框表示。
+
+```{r}
+net_plot_comm
+```
+
+**为了方便识别这些中心节点都是些什么用户，随报告附上**各个中心节点对应的源头用户相关资料，包括用户的ID、账户名、账户描述、发过的被广为传播的推文内容。
+
+此外，所需的每日每万用户发文数图如下。每日每万用户发文数 = 每日推文总数 / 每日活跃用户总数。
+
+```{r}
+tar_load(general_plot_dt)
+ggplot(general_plot_dt) + 
+  geom_line(aes(date, tw_int)) + 
+  labs(x = "Date", y = "Tweet number per 10000 users")
+```
+
+此外，附上你之前学会有用过的、类似的总推文数和每日活跃用户数的变化图如下。
+
+```{r}
+ggplot(general_plot_dt) + 
+  geom_line(aes(date, tw_num)) + 
+  labs(x = "Date", y = "Tweet number")
+ggplot(general_plot_dt) + 
+  geom_line(aes(date, usr_num)) + 
+  labs(x = "Date", y = "User number")
+```
+
+由于数据差异很大，考虑用对数尺度。
+
+```{r}
+ggplot(general_plot_dt) + 
+  geom_line(aes(date, log(tw_num))) + 
+  labs(x = "Date", y = "LN(Tweet number)")
+ggplot(general_plot_dt) + 
+  geom_line(aes(date, log(usr_num))) + 
+  labs(x = "Date", y = "LN(User number)")
+```

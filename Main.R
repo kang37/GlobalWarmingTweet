@@ -72,3 +72,30 @@ lapply(
 net_plot_cen
 # Network plots with community information. 
 net_plot_comm
+
+## Data export ----
+tar_load(csv_event)
+tar_load(author_attr)
+for (i in c("rice", "hot")) {
+  for (j in c("cen_degree", "cen_between")) {
+    tar_user <- 
+      graph_cen[[i]] %>% 
+      arrange(-get(j)) %>% 
+      select(name, author_username, {{j}}) %>% 
+      head(10) %>% 
+      mutate(dummy = TRUE) %>% 
+      select(name, {{j}}, dummy)
+    csv_event[[i]] %>% 
+      left_join(tar_user, by = c("retweeted_user_id" = "name")) %>% 
+      filter(dummy) %>% 
+      select(retweeted_user_id, text, {{j}}) %>% 
+      arrange(-get(j), retweeted_user_id) %>% 
+      left_join(author_attr[[i]], by = c("retweeted_user_id" = "author_id")) %>% 
+      rename(
+        retweeted_username = author_username, 
+        retweeted_description = author_description
+      ) %>% 
+      distinct() %>% 
+      write.csv(paste0("data_proc/", i, "_", "top_", j, ".csv"))
+  }
+}

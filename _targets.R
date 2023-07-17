@@ -71,6 +71,18 @@ list(
     ) %>% 
       do.call(rbind, .)
   ), 
+  # Change of daily tweet number per 10000 users. 
+  tar_target(
+    general_plot_dt, 
+    csv %>% 
+      group_by(date) %>% 
+      summarise(
+        tw_num = n(), 
+        usr_num = length(unique(author_id)), 
+        tw_int = tw_num / usr_num * 10000
+      ) %>% 
+      ungroup()
+  ), 
   # Corpus. 
   tar_target(
     corp, 
@@ -119,7 +131,9 @@ list(
       function(x) {
         select(
           x, id, date, author_id, retweeted_user_id, 
-          author_username = author.username
+          author_username = author.username, 
+          author_description = author.description, 
+          text
         ) %>% 
           mutate(
             author_id = as.character(author_id), 
@@ -134,7 +148,7 @@ list(
     lapply(
       csv_event, 
       function(x) {
-        select(x, author_id, author_username) %>% 
+        select(x, author_id, author_username, author_description) %>% 
           distinct()
       }
     )
@@ -215,6 +229,7 @@ list(
           mutate(community = as.factor(group_components())) %>% 
           mutate(author_username = case_when(
             mvp_grp == "no_mvp" ~ NA_character_, 
+            mvp_grp != "no_mvp" & is.na(author_username) ~ "", 
             TRUE ~ author_username
           ))
       }
