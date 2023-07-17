@@ -47,7 +47,20 @@ tar_option_set(packages = c(
 
 # List of target objects.
 list(
-  # get corpus based on tweet data in *.csv files
+  tar_target(
+    user_num, 
+    tibble(
+      year = 2012:2022, 
+      # Unit of total Twitter user number: thousand people. 
+      annual_user = c(
+        20032.101, 22297.45, 27864.903, 33680.175, 34936.55, 39471.809, 
+        47277.377, 48976.785, 53359.758, 57981.924, 56600.991
+      )
+    ) %>% 
+      # Turn unit into people. 
+      mutate(annual_user = annual_user * 1000)
+  ), 
+  # Get corpus based on tweet data in *.csv files
   tar_target(
     csv, 
     lapply(
@@ -69,17 +82,17 @@ list(
           rename_with(~ gsub(".", "_", .x, fixed = TRUE))
       }
     ) %>% 
-      do.call(rbind, .)
+      do.call(rbind, .) %>% 
+      left_join(user_num, by = "year")
   ), 
   # Change of daily tweet number per 10 thousand users. 
   tar_target(
     general_plot_dt, 
     csv %>% 
-      group_by(date) %>% 
+      group_by(date, annual_user) %>% 
       summarise(
         tw_num = n(), 
-        usr_num = length(unique(author_id)), 
-        tw_int = tw_num / usr_num * 100000
+        tw_int = tw_num / annual_user * 100000
       ) %>% 
       ungroup()
   ), 
