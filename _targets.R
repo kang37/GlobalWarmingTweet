@@ -3,9 +3,8 @@ library(targets)
 
 # Define custom functions and other global objects.
 get_event <- 
-  function(corp_x, quant_x) {
-    docvars(corp_x) %>% 
-      tibble() %>% 
+  function(csv_x, quant_x) {
+    csv_x %>% 
       # Number of tweets for each day. 
       group_by(year, month, date) %>% 
       summarise(tw_num = n()) %>% 
@@ -43,14 +42,14 @@ get_event <-
 # Set target-specific options such as packages:
 tar_option_set(packages = c(
   "dplyr", "tidyr", "quanteda", "quanteda.textstats", "quanteda.textplots",
-  "stopwords", "LSX", "ggplot2", "ggraph", "patchwork", "igraph", "lubridate"
+  "stopwords", "LSX", "ggplot2", "ggraph", "patchwork", "tidygraph", "lubridate"
 )) 
 
 # List of target objects.
 list(
   # get corpus based on tweet data in *.csv files
   tar_target(
-    corp, 
+    csv, 
     lapply(
       # Raw data from 2012 to 2021 are all complete year data; while data for 2022 is not complete. 
       list.files("data_raw/tweet_raw", full.names = TRUE), 
@@ -62,9 +61,7 @@ list(
             date = as_date(JSTdate), 
             year = year(date), 
             month = month(date), 
-            # Bug: The cost of the interaction actions? Do not include reply and like here? Reason: retweet and quote means broadcast the info again to other users. 
-            retweet_quote_count = 
-              public_metrics.retweet_count + public_metrics.quote_count
+            retweeted_user_id = referenced_tweets.retweeted.id
           ) %>% 
           select(
             id, date, year, month, author.id, text
@@ -72,16 +69,141 @@ list(
           rename_with(~ gsub(".", "_", .x, fixed = TRUE))
       }
     ) %>% 
-      do.call(rbind, .) %>% 
-      corpus(text_field = "text")
+      do.call(rbind, .)
+  ), 
+  # Corpus. 
+  tar_target(
+    corp, 
+    corpus(csv, text_field = "text")
   ), 
   # The event-identification: continue date with high-tweet-number. 
   tar_target(
     tw_high_90, 
-    get_event(corp_x = corp, quant_x = 0.9)
+    get_event(csv_x = csv, quant_x = 0.9)
   ), 
   tar_target(
     tw_high_85, 
-    get_event(corp_x = corp, quant_x = 0.85)
+    get_event(csv_x = csv, quant_x = 0.85)
+  ), 
+  # Raw data for rice-event and hot-event. 
+  tar_target(
+    csv_raw, 
+    list(
+      rbind(
+        data.table::fread("data_raw/tweet_event/202206.csv"), 
+        data.table::fread("data_raw/tweet_event/202207.csv")
+      )  %>% 
+        tibble() %>% 
+        mutate(date = as_date(created_at)) %>% 
+        filter(date >= as_date("20220625"), date <= as_date("20220702")), 
+      data.table::fread("data_raw/tweet_event/202110.csv") %>% 
+        tibble() %>% 
+        mutate(date = as_date(created_at)) %>% 
+        filter(date >= as_date("20211025"), date <= as_date("20211031"))
+    ) %>% 
+      setNames(c("rice", "hot"))
+  ), 
+  # Further process the event raw data. 
+  tar_target(
+    csv_event, 
+    lapply(
+      csv_raw,
+      function(x) {
+        select(
+          x, id, date, author_id, retweeted_user_id
+        ) %>% 
+          mutate(
+            author_id = as.character(author_id), 
+            retweeted_user_id = as.character(retweeted_user_id)
+          ) %>% 
+          filter(!is.na(retweeted_user_id))
+      }
+    )
+  ), 
+  # Calculate centrality of the nodes. 
+  tar_target(
+    graph_cen, 
+    lapply(
+      csv_event, 
+      function(x) {
+        select(x, author_id, retweeted_user_id) %>% 
+          rename(from = retweeted_user_id, to = author_id) %>% 
+          as_tbl_graph() %>% 
+          activate(nodes) %>% 
+          mutate(
+            cen_degree = centrality_degree(), 
+            cen_between = centrality_betweenness()
+          ) %>% 
+          activate(nodes) %>% 
+          data.frame() %>% 
+          tibble() %>% 
+          arrange(-cen_degree) %>% 
+          mutate(
+            cen_degree_mvp = c(rep(TRUE, 10), rep(FALSE, nrow(.) - 10))
+          ) %>% 
+          arrange(-cen_between) %>% 
+          mutate(cen_between_mvp = c(rep(TRUE, 10), rep(FALSE, nrow(.) - 10))) %>% 
+          mutate(
+            mvp_grp = case_when(
+              cen_degree_mvp + cen_between_mvp == 0 ~ "no_mvp", 
+              cen_degree_mvp + cen_between_mvp == 2 ~ "multi_mvp", 
+              cen_degree_mvp + cen_between_mvp == 1 & cen_degree_mvp ~ "degree_mvp", 
+              cen_degree_mvp + cen_between_mvp == 1 & cen_between_mvp ~ "between_mvp"
+            ), 
+            label = case_when(
+              cen_degree_mvp + cen_between_mvp > 0 ~ name, 
+              TRUE ~ NA_character_
+            )
+          ) %>% 
+          group_by(mvp_grp) %>% 
+          mutate(mvp_id = row_number()) %>% 
+          ungroup() %>% 
+          mutate(mvp_id = case_when(
+            mvp_grp == "no_mvp" ~ NA_character_,
+            mvp_grp == "multi_mvp" ~ paste0("M", mvp_id),
+            mvp_grp == "degree_mvp" ~ paste0("D", mvp_id),
+            mvp_grp == "between_mvp" ~ paste0("B", mvp_id)
+          ))
+      }
+    )
+  ), 
+  # Data for network plots. 
+  tar_target(
+    graph, 
+    lapply(
+      names(csv_event), 
+      function(x) {
+        filter(
+          csv_event[[x]], 
+          retweeted_user_id %in% 
+            c(head(arrange(graph_cen[[x]], -cen_degree), 100)$name, 
+              head(arrange(graph_cen[[x]], -cen_between), 100)$name)
+        ) %>% 
+          filter(
+            author_id %in% 
+              c(head(arrange(graph_cen[[x]], -cen_degree), 100)$name, 
+                head(arrange(graph_cen[[x]], -cen_between), 100)$name)
+          ) %>% 
+          select(author_id, retweeted_user_id) %>% 
+          rename(from = retweeted_user_id, to = author_id) %>% 
+          as_tbl_graph() %>% 
+          activate(nodes) %>% 
+          left_join(graph_cen[[x]], by = "name")
+      }
+    ) %>% 
+      setNames(names(csv_event))
+  ), 
+  # Netword plots. 
+  tar_target(
+    net_plot, 
+    lapply(
+      graph, 
+      function(x) {
+        ggraph(x, layout = 'kk') + 
+          geom_edge_link(alpha = 0.3) + 
+          geom_node_point(aes(size = cen_degree, col = mvp_grp), alpha = 0.9) + 
+          geom_node_label(aes(label = mvp_id), size = 2, alpha = 0.5)
+      }
+    )
   )
 )

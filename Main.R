@@ -2,11 +2,15 @@
 # Analyze the Japanese tweets of "global warming" and "climate change": to identify the tweets of peak events. 
 
 # Preparation ----
-pacman::p_load(targets)
+pacman::p_load(targets, dplyr, lubridate, ggplot2, tidygraph, ggraph)
 tar_make()
 tar_load(tw_high_90)
 tar_load(tw_high_85)
+tar_load(graph_cen)
+tar_load(net_plot)
 
+# Analysis ----
+## Identify peak event ----
 tw_high_90 %>% 
   mutate(
     day = day(date),
@@ -56,3 +60,12 @@ tw_high_85 %>%
   group_by(year) %>% 
   summarise(peak_num = n()) %>% 
   ungroup()
+
+## Event network ----
+# Top users with high centrality values
+lapply(
+  graph_cen, 
+  function(x) filter(x, mvp_grp != "no_mvp")
+)
+# Network plots
+net_plot
