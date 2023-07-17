@@ -118,7 +118,8 @@ list(
       csv_raw,
       function(x) {
         select(
-          x, id, date, author_id, retweeted_user_id
+          x, id, date, author_id, retweeted_user_id, 
+          author_username = author.username
         ) %>% 
           mutate(
             author_id = as.character(author_id), 
@@ -128,13 +129,23 @@ list(
       }
     )
   ), 
+  tar_target(
+    author_attr, 
+    lapply(
+      csv_event, 
+      function(x) {
+        select(x, author_id, author_username) %>% 
+          distinct()
+      }
+    )
+  ), 
   # Calculate centrality of the nodes. 
   tar_target(
     graph_cen, 
     lapply(
-      csv_event, 
+      names(csv_event), 
       function(x) {
-        select(x, author_id, retweeted_user_id) %>% 
+        select(csv_event[[x]], author_id, retweeted_user_id) %>% 
           rename(from = retweeted_user_id, to = author_id) %>% 
           as_tbl_graph() %>% 
           activate(nodes) %>% 
@@ -171,9 +182,11 @@ list(
             mvp_grp == "multi_mvp" ~ paste0("M", mvp_id),
             mvp_grp == "degree_mvp" ~ paste0("D", mvp_id),
             mvp_grp == "between_mvp" ~ paste0("B", mvp_id)
-          ))
+          )) %>% 
+          left_join(author_attr[[x]], by = c("name" = "author_id"))
       }
-    )
+    ) %>% 
+      setNames(c("rice", "hot"))
   ), 
   # Data for network plots. 
   tar_target(
@@ -199,7 +212,11 @@ list(
           left_join(graph_cen[[x]], by = "name") %>% 
           # Community detection. 
           # Bug: Need to figure out the best community-detection function for this case. Besides, this detection is based on filtered nodes, rather than raw data - if raw data is used, there will be too many communities. 
-          mutate(community = as.factor(group_components()))
+          mutate(community = as.factor(group_components())) %>% 
+          mutate(author_username = case_when(
+            mvp_grp == "no_mvp" ~ NA_character_, 
+            TRUE ~ author_username
+          ))
       }
     ) %>% 
       setNames(names(csv_event))
@@ -213,7 +230,7 @@ list(
         ggraph(x, layout = 'kk') + 
           geom_edge_link(alpha = 0.3) + 
           geom_node_point(aes(size = cen_degree, col = mvp_grp), alpha = 0.9) + 
-          geom_node_label(aes(label = mvp_id), size = 2, alpha = 0.5)
+          geom_node_label(aes(label = author_username), size = 2, alpha = 0.5)
       }
     )
   ), 
@@ -225,7 +242,7 @@ list(
         ggraph(x, layout = 'kk') + 
           geom_edge_link(alpha = 0.3) + 
           geom_node_point(aes(size = cen_degree, col = community), alpha = 0.9) + 
-          geom_node_label(aes(label = mvp_id), size = 2, alpha = 0.5)
+          geom_node_label(aes(label = author_username), size = 2, alpha = 0.5)
       }
     )
   )
