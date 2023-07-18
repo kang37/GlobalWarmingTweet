@@ -78,13 +78,31 @@ list(
             retweeted_user_id = referenced_tweets.retweeted.id
           ) %>% 
           select(
-            id, date, year, month, author.id, text
+            id, date, year, month, author.id, text, retweeted_user_id
           ) %>% 
           rename_with(~ gsub(".", "_", .x, fixed = TRUE))
       }
     ) %>% 
       do.call(rbind, .) %>% 
       left_join(user_num, by = "year")
+  ), 
+  # Tweet number change plot. 
+  tar_target(
+    tw_num_plot, 
+    csv %>% 
+      mutate(retweet = case_when(
+      is.na(retweeted_user_id) ~ "Non-retweet", 
+      TRUE ~ "Retweet"
+    )) %>% 
+      group_by(date, retweet) %>% 
+      summarise(tw_num = n()) %>% 
+      ungroup() %>%
+      mutate(retweet = factor(retweet, levels = c("Retweet", "Non-retweet"))) %>% 
+      ggplot() + 
+      geom_col(aes(date, tw_num, fill = retweet)) + 
+      labs(x = "Date", y = "Tweet number") + 
+      scale_fill_discrete(name = "Tweet") + 
+      theme(legend.justification = c(0, 1))
   ), 
   # Change of daily tweet number per 10 thousand users. 
   tar_target(
