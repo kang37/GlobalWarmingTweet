@@ -141,16 +141,16 @@ list(
       pivot_wider(id_cols = grp, names_from = period, values_from = date) %>% 
       mutate(event_id = row_number(), .before = 1)
   ), 
-  # Raw data for rice-event and hot-event. 
+  # Raw data for each event. 
   tar_target(
     csv_raw, 
     map2(
-      event_90$start_day[c(37, 40)], event_90$end_day[c(37, 40)], 
+      event_90$start_day, event_90$end_day, 
       function(start_x, end_x) {
         filter(csv, date >= start_x, date <= end_x)
       }
     ) %>% 
-      set_names(event_90$event_id[c(37, 40)])
+      set_names(event_90$event_id)
   ), 
   # Further process the event raw data. 
   tar_target(
@@ -226,7 +226,7 @@ list(
           left_join(author_attr[[x]], by = c("name" = "author_id"))
       }
     ) %>% 
-      setNames(c("37", "40"))
+      setNames(names(csv_event))
   ), 
   # Data for network plots. 
   tar_target(

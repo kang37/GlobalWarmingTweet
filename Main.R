@@ -8,7 +8,7 @@
 # And an example of the second step, only extracting the data required for this study: 
 # twarc2 csv --no-inline-referenced-tweets --output-columns "id,created_at,author_id,text,retweeted_user_id" jst201201.jsonl 201201.csv
 # Bug: The second step caused some errors, so I ran the command lines in terminal panel of RStudion. 
-pacman::p_load(targets, dplyr, lubridate, ggplot2, tidygraph, ggraph)
+pacman::p_load(targets, dplyr, lubridate, ggplot2, tidygraph, ggraph, openxlsx)
 tar_make()
 tar_load(tw_high_90)
 tar_load(tw_high_85)
@@ -80,28 +80,38 @@ net_plot_cen
 net_plot_comm
 
 ## Data export ----
-tar_load(csv_event)
-tar_load(author_attr)
-for (i in c("rice", "hot")) {
-  for (j in c("cen_degree", "cen_between")) {
-    tar_user <- 
-      graph_cen[[i]] %>% 
-      arrange(-get(j)) %>% 
-      select(name, author_username, {{j}}) %>% 
-      head(10) %>% 
-      mutate(dummy = TRUE) %>% 
-      select(name, {{j}}, dummy)
-    csv_event[[i]] %>% 
-      left_join(tar_user, by = c("retweeted_user_id" = "name")) %>% 
-      filter(dummy) %>% 
-      select(retweeted_user_id, text, {{j}}) %>% 
-      arrange(-get(j), retweeted_user_id) %>% 
-      left_join(author_attr[[i]], by = c("retweeted_user_id" = "author_id")) %>% 
-      rename(
-        retweeted_username = author_username, 
-        retweeted_description = author_description
-      ) %>% 
-      distinct() %>% 
-      write.csv(paste0("data_proc/", i, "_", "top_", j, ".csv"))
+# Start and end date of each event.
+tar_load(event_90)
+write.csv(event_90, "data_proc/event_date.csv")
+
+# Raw data of each event. 
+tar_load(csv_raw)
+lapply(
+  names(csv_raw), 
+  function(x) write.csv(csv_raw[[x]], paste0("data_proc/event_raw/", x, ".csv"))
+)
+
+# Users with high degree centrality. 
+tar_load(graph_cen)
+top_degree <- lapply(
+  graph_cen, 
+  function(x) {
+    x %>% 
+      arrange(-cen_degree) %>% 
+      select(retweeted_userid = name, retweeted_username = author_username, cen_degree) %>% 
+      head(10)
   }
-}
+)
+write.xlsx(top_degree, "data_proc/top_degree.xlsx")
+
+# Users with high between centrality. 
+top_between <- lapply(
+  graph_cen, 
+  function(x) {
+    x %>% 
+      arrange(-cen_between) %>% 
+      select(retweeted_userid = name, retweeted_username = author_username, cen_between) %>% 
+      head(10)
+  }
+)
+write.xlsx(top_between, "data_proc/top_between.xlsx")
