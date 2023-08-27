@@ -132,7 +132,7 @@ graph_cen[["hot"]] %>%
   knitr::kable()
 ```
 
-然后做网络图。由于无法将所有的节点和连接都画出来（非常耗时而且看不清联系），筛选出度量中心度或中介中心度比较高的节点做网络图。community detection采用的方法是\"connected compenents using [igraph::components()](http://127.0.0.1:33663/help/library/igraph/help/components)\"，因为group_louvain()只能用来做无方向连接网络的community detection。两个事件的网络图如下，community以颜色区分，并且展示中心用户在网络中的位置，标签为账户名（就是艾特后面那串）。对于数据库中无对应账户名的，以空标签框表示。
+然后做网络图。由于无法将所有的节点和连接都画出来（非常耗时而且看不清联系），筛选出度量中心度或中介中心度比较高的节点做网络图。community detection采用的方法是"connected compenents using [igraph::components()](http://127.0.0.1:33663/help/library/igraph/help/components)"，因为group_louvain()只能用来做无方向连接网络的community detection。两个事件的网络图如下，community以颜色区分，并且展示中心用户在网络中的位置，标签为账户名（就是艾特后面那串）。对于数据库中无对应账户名的，以空标签框表示。
 
 ```{r}
 net_plot_comm
