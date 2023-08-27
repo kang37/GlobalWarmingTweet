@@ -2,6 +2,12 @@
 # Analyze the Japanese tweets of "global warming" and "climate change": to identify the tweets of peak events. 
 
 # Preparation ----
+# Transform Twitter data from *.json to *.jsonl, then to *.csv using twarc2 in terminal.
+# An example of the first step (change directory to the folder first): 
+# twarc2 flatten jst201201.json jst201201.jsonl
+# And an example of the second step, only extracting the data required for this study: 
+# twarc2 csv --no-inline-referenced-tweets --output-columns "id,created_at,author_id,text,retweeted_user_id" jst201201.jsonl 201201.csv
+# Bug: The second step caused some errors, so I ran the command lines in terminal panel of RStudion. 
 pacman::p_load(targets, dplyr, lubridate, ggplot2, tidygraph, ggraph)
 tar_make()
 tar_load(tw_high_90)

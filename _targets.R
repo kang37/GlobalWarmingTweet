@@ -35,6 +35,7 @@ get_event <-
         row_num = row_number(), 
         max_row_num = max(row_num)
       ) %>% 
+      ungroup() %>% 
       # Keep days of continue date of high-tweet-number >= 3 days. 
       filter(max_row_num >= 3) %>% 
       return()
@@ -42,8 +43,9 @@ get_event <-
 
 # Set target-specific options such as packages:
 tar_option_set(packages = c(
-  "dplyr", "tidyr", "quanteda", "quanteda.textstats", "quanteda.textplots",
-  "stopwords", "LSX", "ggplot2", "ggraph", "patchwork", "tidygraph", "lubridate"
+  "dplyr", "tidyr", "purrr", "quanteda", "quanteda.textstats", 
+  "quanteda.textplots", "stopwords", "LSX", "ggplot2", "ggraph", "patchwork", 
+  "tidygraph", "lubridate"
 )) 
 
 # List of target objects.
@@ -66,21 +68,23 @@ list(
     csv, 
     lapply(
       # Raw data from 2012 to 2021 are all complete year data; while data for 2022 is not complete. 
-      list.files("data_raw/tweet_raw", full.names = TRUE), 
+      list.files("data_raw/tweet_csv", full.names = TRUE), 
       function(x) {
         data.table::fread(x) %>% 
-          tibble() %>% 
-          # parse created_at of tweets to get year and month info
           mutate(
-            date = as_date(JSTdate), 
+            id = as.character(id), 
+            # Turn UTC to JST time. 
+            date = as_date(with_tz(created_at, "Asia/Tokyo")), 
+            author_id = as.character(author_id), 
+            retweeted_user_id = as.character(retweeted_user_id), 
             year = year(date), 
-            month = month(date), 
-            retweeted_user_id = referenced_tweets.retweeted.id
+            month = month(date)
           ) %>% 
+          tibble() %>% 
           select(
-            id, date, year, month, author.id, text, retweeted_user_id
-          ) %>% 
-          rename_with(~ gsub(".", "_", .x, fixed = TRUE))
+            id, date, year, month, author_id, text, retweeted_user_id, 
+            author_username = author.username
+          )
       }
     ) %>% 
       do.call(rbind, .) %>% 
@@ -124,31 +128,29 @@ list(
     tw_high_85, 
     get_event(csv_x = csv, quant_x = 0.85)
   ), 
+  # Event period extraction.
+  tar_target(
+    event_90, 
+    tw_high_90 %>% 
+      mutate(period = case_when(
+        row_num == 1 ~ "start_day", 
+        row_num == max_row_num ~ "end_day"
+      )) %>% 
+      select(grp, date, period) %>% 
+      filter(!is.na(period)) %>% 
+      pivot_wider(id_cols = grp, names_from = period, values_from = date) %>% 
+      mutate(event_id = row_number(), .before = 1)
+  ), 
   # Raw data for rice-event and hot-event. 
   tar_target(
     csv_raw, 
-    list(
-      data.table::fread("data_raw/tweet_event/202110.csv") %>% 
-        tibble() %>% 
-        mutate(
-          date = as_date(created_at), 
-          author_id = as.character(author_id), 
-          retweeted_user_id = as.character(retweeted_user_id)
-        ) %>%  
-        filter(date >= as_date("20211025"), date <= as_date("20211031")), 
-      rbind(
-        data.table::fread("data_raw/tweet_event/202206.csv"), 
-        data.table::fread("data_raw/tweet_event/202207.csv")
-      )  %>% 
-        tibble() %>% 
-        mutate(
-          date = as_date(created_at), 
-          author_id = as.character(author_id), 
-          retweeted_user_id = as.character(retweeted_user_id)
-        ) %>%  
-        filter(date >= as_date("20220625"), date <= as_date("20220702"))
+    map2(
+      event_90$start_day[c(37, 40)], event_90$end_day[c(37, 40)], 
+      function(start_x, end_x) {
+        filter(csv, date >= start_x, date <= end_x)
+      }
     ) %>% 
-      setNames(c("rice", "hot"))
+      set_names(event_90$event_id[c(37, 40)])
   ), 
   # Further process the event raw data. 
   tar_target(
@@ -157,10 +159,7 @@ list(
       csv_raw,
       function(x) {
         select(
-          x, id, date, author_id, retweeted_user_id, 
-          author_username = author.username, 
-          author_description = author.description, 
-          text
+          x, id, date, author_id, retweeted_user_id, author_username, text
         ) %>% 
           mutate(
             author_id = as.character(author_id), 
@@ -175,7 +174,7 @@ list(
     lapply(
       csv_event, 
       function(x) {
-        select(x, author_id, author_username, author_description) %>% 
+        select(x, author_id, author_username) %>% 
           distinct()
       }
     )
@@ -227,7 +226,7 @@ list(
           left_join(author_attr[[x]], by = c("name" = "author_id"))
       }
     ) %>% 
-      setNames(c("rice", "hot"))
+      setNames(c("37", "40"))
   ), 
   # Data for network plots. 
   tar_target(
