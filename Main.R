@@ -7,17 +7,17 @@
 # twarc2 flatten jst201201.json jst201201.jsonl
 # And an example of the second step, only extracting the data required for this study: 
 # twarc2 csv --no-inline-referenced-tweets --output-columns "id,created_at,author_id,text,retweeted_user_id" jst201201.jsonl 201201.csv
-# Bug: The second step caused some errors, so I ran the command lines in terminal panel of RStudion. 
-pacman::p_load(targets, dplyr, lubridate, ggplot2, tidygraph, ggraph, openxlsx)
+# Bug: The second step caused some errors, so I ran the command lines in terminal panel of RStudio. 
+pacman::p_load(
+  targets, dplyr, lubridate, ggplot2, tidygraph, ggraph, openxlsx, quanteda
+)
 tar_make()
-tar_load(tw_high_90)
-tar_load(tw_high_85)
-tar_load(graph_cen)
-tar_load(net_plot_cen)
-tar_load(net_plot_comm)
 
 # Analysis ----
 ## Identify peak event ----
+tar_load(tw_high_90)
+tar_load(tw_high_85)
+
 tw_high_90 %>% 
   mutate(
     day = day(date),
@@ -69,11 +69,8 @@ tw_high_85 %>%
   ungroup()
 
 ## Event network ----
-# Top users with high centrality values
-lapply(
-  graph_cen, 
-  function(x) filter(x, mvp_grp != "no_mvp")
-)
+tar_load(net_plot_cen)
+tar_load(net_plot_comm)
 # Network plots with centrality information. 
 net_plot_cen
 # Network plots with community information. 
