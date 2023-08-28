@@ -286,5 +286,137 @@ list(
           geom_node_label(aes(label = author_username), size = 2, alpha = 0.5)
       }
     )
+  ), 
+  # Text analysis. 
+  # Make corpus. 
+  tar_target(
+    corp, 
+    lapply(
+      csv_raw, 
+      function(x) corpus(x, text_field = "text")
+    )
+  ), 
+  # User-defined dictionary. 
+  tar_target(
+    dict, 
+    list(
+      "地球 温暖 化", 
+      "国立 環境 研究所", 
+      "環境 研究所",
+      "環境 研", 
+      "江守 正多", 
+      "江守 正多 先生", 
+      "グレタ トゥーンベリ", 
+      "地球 環境 研究 センター", 
+      "再 稼働", 
+      "強制 移住 防止 策", 
+      "温暖 化", 
+      "京都 議定書", 
+      "松岡 修造", 
+      "温室 効果 ガス", 
+      "寒冷 化", 
+      "砂漠 化", 
+      "CO2", 
+      "CO２", 
+      "オゾン 層", 
+      "可能 性", 
+      "排出 量", 
+      "議定 書", 
+      "熱 中 症", 
+      "科学 者", 
+      "宇宙 ゴミ", 
+      "数 年", 
+      "パリ 協定", 
+      "東京 タワー", 
+      "小泉 進次郎", 
+      "レジ 袋",
+      "私 たち",
+      "子供 たち",
+      "生態 系",
+      "花粉 症",
+      "令 和",
+      "化石 燃料",
+      "気候 変動",
+      "異常 気象",
+      "気象 異常",
+      "森林 伐採",
+      "高齢 化",
+      "子供 ごろ", 
+      "子供 頃",
+      "クマゼミ",
+      "政治 家",
+      "先進 国",
+      "途上 国",
+      "気温 上昇",
+      "海面 上昇",
+      "火力 発電",
+      "氷 期",
+      "具体 的",
+      "人為 的",
+      "十 年",
+      "軍事 費",
+      "人 たち",
+      "自然 災害",
+      "感染 症",
+      "世界 的",
+      "永久 凍土",
+      "有料 化", 
+      "一 番",
+      "電気 代",
+      "バイデン 氏",
+      "COP",
+      "科学 的",
+      "陰謀 論", 
+      "今 年", 
+      "世界 の 財界",
+      "今 月",
+      "今 週",
+      "今 日", 
+      "麻生 氏", 
+      "麻生 太郎", 
+      "気候 変動"
+    ) %>%  
+      unique() %>% 
+      setNames(1:length(.)) %>% 
+      dictionary()
+  ), 
+  # Stop words. 
+  tar_target(
+    stopword, 
+    c(stopwords("ja", source = "marimo"), 
+      "amp", "ます", "です", "こと", "って", "てい", "という", "んで", "ので", 
+      "なく", "など", "なる", "せん", "しま", "とか", "しょう", "ろう", "けど", 
+      "さん", "あっ", "られる", "ぜひ", "てる")
+  ),
+  # Tokenization. 
+  tar_target(
+    tok, 
+    lapply(
+      corp, 
+      function(x) {
+        tokens(
+          x, 
+          remove_symbols = TRUE, 
+          remove_numbers = TRUE, 
+          remove_url = TRUE, 
+          remove_separators = TRUE, 
+          remove_punct = TRUE
+        ) %>% 
+          # Bug: Should delete text with just a few words? 
+          tokens_compound(pattern = dict, concatenator = "") %>% 
+          # Keep tokens in Japanese. 
+          # Bug: Need to keep the words in other language? 
+          tokens_select(
+            pattern = "^[ぁ-んァ-ヶー一-龠]+$", valuetype = "regex", padding = TRUE
+          ) %>% 
+          tokens_keep(min_nchar = 2) %>% 
+          tokens_remove(pattern = stopword)
+      }
+    )
+  ), 
+  # Document-term matrix. 
+  tar_target(
+    df_matrix, 
+    lapply(tok, dfm)
   )
 )

@@ -112,3 +112,18 @@ top_between <- lapply(
   }
 )
 write.xlsx(top_between, "data_proc/top_between.xlsx")
+
+# Top frequency terms
+tar_load(df_matrix)
+top_term <- 
+  lapply(
+    df_matrix, 
+    function(x) {
+      topfeatures(x, n = 30) %>% 
+        as.data.frame() %>% 
+        rename_with(~ "freq") %>% 
+        mutate(term = rownames(.), .before = 1) %>% 
+        tibble()
+    }
+  )
+write.xlsx(top_term, "data_proc/top_frequency_term.xlsx")
