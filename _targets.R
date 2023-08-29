@@ -74,16 +74,20 @@ list(
           mutate(
             id = as.character(id), 
             # Turn UTC to JST time. 
-            date = as_date(with_tz(created_at, "Asia/Tokyo")), 
+            created_at = as_date(with_tz(created_at, "Asia/Tokyo")), 
             author_id = as.character(author_id), 
             retweeted_user_id = as.character(retweeted_user_id), 
-            year = year(date), 
-            month = month(date)
+            year = year(created_at), 
+            month = month(created_at)
           ) %>% 
           tibble() %>% 
           select(
-            id, date, year, month, author_id, text, retweeted_user_id, 
-            author_username = author.username
+            id, date = created_at, year, month, 
+            author_id, author_username = author.username, 
+            author_description = author.description, 
+            followers_count = author.public_metrics.followers_count, 
+            text, retweet_count = public_metrics.retweet_count, 
+            retweeted_user_id
           )
       }
     ) %>% 
@@ -161,10 +165,12 @@ list(
         select(
           x, id, date, author_id, retweeted_user_id, author_username, text
         ) %>% 
+          distinct() %>% 
           mutate(
             author_id = as.character(author_id), 
             retweeted_user_id = as.character(retweeted_user_id)
           ) %>% 
+          # Bug: Here, "no retweeted, no impact" is an arbitrary assumption. 
           filter(!is.na(retweeted_user_id))
       }
     )
@@ -172,12 +178,13 @@ list(
   tar_target(
     author_attr, 
     lapply(
-      csv_event, 
-      function(x) {
-        select(x, author_id, author_username) %>% 
-          distinct()
-      }
-    )
+      csv_raw, 
+      function(x) select(
+        x, author_id, author_username, followers_count, author_description
+      )
+    ) %>% 
+      do.call(rbind, .) %>% 
+      distinct()
   ), 
   # Calculate centrality of the nodes. 
   tar_target(
@@ -223,10 +230,55 @@ list(
             mvp_grp == "degree_mvp" ~ paste0("D", mvp_id),
             mvp_grp == "between_mvp" ~ paste0("B", mvp_id)
           )) %>% 
-          left_join(author_attr[[x]], by = c("name" = "author_id"))
+          left_join(
+            distinct(select(author_attr, author_id, author_username)), 
+            by = c("name" = "author_id")
+          ) %>% 
+          # Some times one author_id has more than one username, so keep the first here. 
+          group_by(name) %>% 
+          mutate(row_num = row_number()) %>% 
+          ungroup() %>% 
+          filter(row_num == 1) %>% 
+          select(-row_num)
       }
     ) %>% 
       setNames(names(csv_event))
+  ), 
+  # Users with high degree centrality.
+  tar_target(
+    top_degree, 
+    lapply(
+      graph_cen, 
+      function(x) {
+        x %>% 
+          arrange(-cen_degree) %>% 
+          select(
+            retweeted_userid = name, 
+            retweeted_username = author_username, 
+            cen_degree
+          ) %>% 
+          head(10) %>% 
+          left_join(author_attr, by = c("retweeted_userid" = "author_id"))
+      }
+    )
+  ), 
+  # Users with high between centrality. 
+  tar_target(
+    top_between, 
+    lapply(
+      graph_cen, 
+      function(x) {
+        x %>% 
+          arrange(-cen_between) %>% 
+          select(
+            retweeted_userid = name, 
+            retweeted_username = author_username, 
+            cen_between
+          ) %>% 
+          head(10) %>% 
+          left_join(author_attr, by = c("retweeted_userid" = "author_id"))
+      }
+    )
   ), 
   # Data for network plots. 
   tar_target(
@@ -262,7 +314,7 @@ list(
     ) %>% 
       setNames(names(csv_event))
   ), 
-  # Netword plots. 
+  # Network plots. 
   tar_target(
     net_plot_cen, 
     lapply(

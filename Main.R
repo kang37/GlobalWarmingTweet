@@ -6,7 +6,7 @@
 # An example of the first step (change directory to the folder first): 
 # twarc2 flatten jst201201.json jst201201.jsonl
 # And an example of the second step, only extracting the data required for this study: 
-# twarc2 csv --no-inline-referenced-tweets --output-columns "id,created_at,author_id,text,retweeted_user_id" jst201201.jsonl 201201.csv
+# twarc2 csv --no-inline-referenced-tweets --output-columns "id,created_at,author_id,author.username,author.description,author.public_metrics.followers_count,text,retweeted_user_id,public_metrics.retweet_count" jst201201.jsonl 201201.csv
 # Bug: The second step caused some errors, so I ran the command lines in terminal panel of RStudio. 
 pacman::p_load(
   targets, dplyr, lubridate, ggplot2, tidygraph, ggraph, openxlsx, quanteda
@@ -89,28 +89,11 @@ lapply(
 )
 
 # Users with high degree centrality. 
-tar_load(graph_cen)
-top_degree <- lapply(
-  graph_cen, 
-  function(x) {
-    x %>% 
-      arrange(-cen_degree) %>% 
-      select(retweeted_userid = name, retweeted_username = author_username, cen_degree) %>% 
-      head(10)
-  }
-)
+tar_load(top_degree)
 write.xlsx(top_degree, "data_proc/top_degree.xlsx")
 
 # Users with high between centrality. 
-top_between <- lapply(
-  graph_cen, 
-  function(x) {
-    x %>% 
-      arrange(-cen_between) %>% 
-      select(retweeted_userid = name, retweeted_username = author_username, cen_between) %>% 
-      head(10)
-  }
-)
+tar_load(top_between)
 write.xlsx(top_between, "data_proc/top_between.xlsx")
 
 # Top frequency terms
