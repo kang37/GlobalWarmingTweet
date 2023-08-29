@@ -110,3 +110,21 @@ top_term <-
     }
   )
 write.xlsx(top_term, "data_proc/top_frequency_term.xlsx")
+
+# High centrality user's participation in events
+# Bug: Take betweenness centrality as the example for now. 
+tar_load(top_between)
+png("data_proc/plot_high_cen_user_event.png", 
+    width = 2000, height = 8000, res = 300)
+lapply(
+  names(top_between), 
+  function(x) {
+    mutate(top_between[[x]], event = x, .before = 1) %>% 
+      select(event, author_username)
+  }
+) %>% 
+  bind_rows() %>% 
+  ggplot() + 
+  geom_tile(aes(event, author_username), col = "white")
+dev.off()
+
