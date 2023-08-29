@@ -84,6 +84,7 @@ list(
           select(
             id, date = created_at, year, month, 
             author_id, author_username = author.username, 
+            author_name = author.name, 
             author_description = author.description, 
             followers_count = author.public_metrics.followers_count, 
             text, retweet_count = public_metrics.retweet_count, 
@@ -180,7 +181,8 @@ list(
     lapply(
       csv_raw, 
       function(x) select(
-        x, author_id, author_username, followers_count, author_description
+        x, author_id, author_username, author_name, 
+        followers_count, author_description
       )
     ) %>% 
       do.call(rbind, .) %>% 
@@ -252,13 +254,22 @@ list(
       function(x) {
         x %>% 
           arrange(-cen_degree) %>% 
-          select(
-            retweeted_userid = name, 
-            retweeted_username = author_username, 
-            cen_degree
-          ) %>% 
+          select(userid = name, cen_degree) %>% 
           head(10) %>% 
-          left_join(author_attr, by = c("retweeted_userid" = "author_id"))
+          left_join(author_attr, by = c("userid" = "author_id")) %>% 
+          # Since one user might have a changing follower count etc., so let's combine the potential multiple rows of the fields into one row. 
+          group_by(userid, cen_degree) %>% 
+          summarise(
+            followers_count = 
+              paste(min(followers_count), max(followers_count), sep = "-"), 
+            author_username = 
+              paste(unique(author_username), collapse = "----"), 
+            author_name = 
+              paste(unique(author_name), collapse = "----"), 
+            author_description = 
+              paste(unique(author_description), collapse = "----"), 
+            .groups = "drop"
+          )
       }
     )
   ), 
@@ -270,13 +281,23 @@ list(
       function(x) {
         x %>% 
           arrange(-cen_between) %>% 
-          select(
-            retweeted_userid = name, 
-            retweeted_username = author_username, 
-            cen_between
+          select(userid = name, cen_between
           ) %>% 
           head(10) %>% 
-          left_join(author_attr, by = c("retweeted_userid" = "author_id"))
+          left_join(author_attr, by = c("userid" = "author_id")) %>% 
+          # Since one user might have a changing follower count etc., so let's combine the potential multiple rows of the fields into one row. 
+          group_by(userid) %>% 
+          summarise(
+            followers_count = 
+              paste(min(followers_count), max(followers_count), sep = "-"), 
+            author_username = 
+              paste(unique(author_username), collapse = "----"), 
+            author_name = 
+              paste(unique(author_name), collapse = "----"), 
+            author_description = 
+              paste(unique(author_description), collapse = "----"), 
+            .groups = "drop"
+          )
       }
     )
   ), 

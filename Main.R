@@ -6,7 +6,7 @@
 # An example of the first step (change directory to the folder first): 
 # twarc2 flatten jst201201.json jst201201.jsonl
 # And an example of the second step, only extracting the data required for this study: 
-# twarc2 csv --no-inline-referenced-tweets --output-columns "id,created_at,author_id,author.username,author.description,author.public_metrics.followers_count,text,retweeted_user_id,public_metrics.retweet_count" jst201201.jsonl 201201.csv
+# twarc2 csv --no-inline-referenced-tweets --output-columns "id,created_at,author_id,author.username,author.name,author.description,author.public_metrics.followers_count,text,retweeted_user_id,public_metrics.retweet_count" jst201201.jsonl 201201.csv
 # Bug: The second step caused some errors, so I ran the command lines in terminal panel of RStudio. 
 pacman::p_load(
   targets, dplyr, lubridate, ggplot2, tidygraph, ggraph, openxlsx, quanteda
