@@ -260,8 +260,8 @@ list(
           # Since one user might have a changing follower count etc., so let's combine the potential multiple rows of the fields into one row. 
           group_by(userid, cen_degree) %>% 
           summarise(
-            followers_count = 
-              paste(min(followers_count), max(followers_count), sep = "-"), 
+            min_followers_count = min(followers_count), 
+            max_followers_count = max(followers_count), 
             author_username = 
               paste(unique(author_username), collapse = "----"), 
             author_name = 
@@ -288,8 +288,8 @@ list(
           # Since one user might have a changing follower count etc., so let's combine the potential multiple rows of the fields into one row. 
           group_by(userid) %>% 
           summarise(
-            followers_count = 
-              paste(min(followers_count), max(followers_count), sep = "-"), 
+            min_followers_count = min(followers_count), 
+            max_followers_count = max(followers_count), 
             author_username = 
               paste(unique(author_username), collapse = "----"), 
             author_name = 
