@@ -127,3 +127,36 @@ lapply(
   geom_tile(aes(event, author_username), col = "white")
 dev.off()
 
+# Distribution of participate number of high-degree-centrality users. 
+# Bug: Here I use author_username to group the data because that we can understand the tile plot easier, but it should be done with userid rather than author_username because a userid may have multiple author_username. 
+degree_user_event_num <- lapply(
+  names(top_degree), 
+  function(x) {
+    mutate(top_degree[[x]], event = x, .before = 1) %>% 
+      select(event, author_username)
+  }
+) %>% 
+  bind_rows() %>% 
+  group_by(author_username) %>% 
+  summarise(n_event = n(), .groups = "drop")
+ggplot(degree_user_event_num) + 
+  geom_histogram(aes(n_event)) + 
+  scale_x_continuous(labels = scales::label_number(accuracy = 1))
+write.csv(degree_user_event_num, "data_proc/degree_user_event_num.csv")
+
+# Distribution of participate number of high-between-centrality users. 
+# Bug: Here I use author_username to group the data because that we can understand the tile plot easier, but it should be done with userid rather than author_username because a userid may have multiple author_username. 
+between_user_event_num <- lapply(
+  names(top_between), 
+  function(x) {
+    mutate(top_between[[x]], event = x, .before = 1) %>% 
+      select(event, author_username)
+  }
+) %>% 
+  bind_rows() %>% 
+  group_by(author_username) %>% 
+  summarise(n_event = n(), .groups = "drop")
+ggplot(between_user_event_num) + 
+  geom_histogram(aes(n_event))
+write.csv(between_user_event_num, "data_proc/between_user_event_num.csv")
+
