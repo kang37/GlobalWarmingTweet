@@ -157,9 +157,14 @@ degree_user_event_num <- lapply(
       ), 
     by = c("userid" = "author_id")
   )
-ggplot(degree_user_event_num) + 
-  geom_histogram(aes(n_event)) + 
-  scale_x_continuous(labels = scales::label_number(accuracy = 1))
+degree_user_event_num %>% 
+  group_by(n_event) %>% 
+  summarise(user_number = n(), .groups = "drop") %>% 
+  ggplot(aes(n_event, user_number)) + 
+  geom_col() + 
+  geom_text(aes(label = user_number), vjust = -1, size = 3) + 
+  lims(y = c(0, 255)) + 
+  scale_x_continuous(breaks = seq(0, 15, 1))
 write.csv(degree_user_event_num, "data_proc/degree_user_event_num.csv")
 
 # Distribution of participate number of high-between-centrality users. 
@@ -189,7 +194,13 @@ between_user_event_num <- lapply(
       ), 
     by = c("userid" = "author_id")
   )
-ggplot(between_user_event_num) + 
-  geom_histogram(aes(n_event))
+between_user_event_num %>% 
+  group_by(n_event) %>% 
+  summarise(user_number = n(), .groups = "drop") %>% 
+  ggplot(aes(n_event, user_number)) + 
+  geom_col() + 
+  geom_text(aes(label = user_number), vjust = -1, size = 3) + 
+  lims(y = c(0, 255)) + 
+  scale_x_continuous(breaks = seq(0, 15, 1))
 write.csv(between_user_event_num, "data_proc/between_user_event_num.csv")
 
