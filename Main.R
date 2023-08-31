@@ -204,3 +204,29 @@ between_user_event_num %>%
   scale_x_continuous(breaks = seq(0, 15, 1))
 write.csv(between_user_event_num, "data_proc/between_user_event_num.csv")
 
+# User-events-distribution by tags. 
+rbind(
+  read.csv("data_raw/manual_data/degree_user_event_num_tag.csv") %>% 
+    mutate(centrality = "Between cen") %>% 
+    select(centrality, tag, n_event), 
+  read.csv("data_raw/manual_data/between_user_event_num_tag.csv") %>% 
+    mutate(centrality = "Degree cen") %>% 
+    select(centrality, tag, n_event)
+) %>% 
+  # Keep user-events larger than 1. 
+  filter(n_event > 1) %>% 
+  group_by(centrality, tag) %>% 
+  summarise(n_event = sum(n_event), .groups = "drop") %>% 
+  group_by(centrality) %>% 
+  mutate(
+    tot_event_num = sum(n_event), 
+    prop_event = n_event / tot_event_num * 100
+  ) %>% 
+  ggplot(aes(x = centrality, y = prop_event, fill = tag)) + 
+  geom_col(position = "stack") + 
+  geom_text(
+    aes(label = round(prop_event)), position = position_stack(vjust = .5), size = 3
+  ) + 
+  coord_flip() + 
+  guides(fill = guide_legend(title = "Tag"))
+
