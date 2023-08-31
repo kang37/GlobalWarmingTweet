@@ -225,7 +225,8 @@ rbind(
   ggplot(aes(x = centrality, y = prop_event, fill = tag)) + 
   geom_col(position = "stack") + 
   geom_text(
-    aes(label = round(prop_event)), position = position_stack(vjust = .5), size = 3
+    aes(label = round(prop_event, digits = 1)), 
+    position = position_stack(vjust = .5), size = 3
   ) + 
   coord_flip() + 
   guides(fill = guide_legend(title = "Tag"))
