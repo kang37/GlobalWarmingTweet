@@ -151,6 +151,7 @@ degree_user_event_num <- lapply(
           paste(unique(author_username), collapse = "----"), 
         author_name = 
           paste(unique(author_name), collapse = "----"), 
+        max_followers_count = max(followers_count), 
         author_description = 
           paste(unique(author_description), collapse = "----")
       ), 
@@ -182,6 +183,7 @@ between_user_event_num <- lapply(
           paste(unique(author_username), collapse = "----"), 
         author_name = 
           paste(unique(author_name), collapse = "----"), 
+        max_followers_count = max(followers_count), 
         author_description = 
           paste(unique(author_description), collapse = "----")
       ), 
