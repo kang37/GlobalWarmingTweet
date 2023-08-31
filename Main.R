@@ -11,6 +11,7 @@
 pacman::p_load(
   targets, dplyr, lubridate, ggplot2, tidygraph, ggraph, openxlsx, quanteda
 )
+showtext::showtext_auto()
 tar_make()
 
 # Analysis ----
@@ -222,6 +223,11 @@ rbind(
     tot_event_num = sum(n_event), 
     prop_event = n_event / tot_event_num * 100
   ) %>% 
+  # Fix a tag. 
+  mutate(
+    tag = case_when(tag == "活動家・NGO" ~ "活動家・組織", TRUE ~ tag)
+  ) %>% 
+  # Plot. 
   ggplot(aes(x = centrality, y = prop_event, fill = tag)) + 
   geom_col(position = "stack") + 
   geom_text(
@@ -229,5 +235,6 @@ rbind(
     position = position_stack(vjust = .5), size = 3
   ) + 
   coord_flip() + 
-  guides(fill = guide_legend(title = "Tag"))
+  guides(fill = guide_legend(title = "Tag")) + 
+  labs(y = "Proportion (%)", x = "Centrality")
 
