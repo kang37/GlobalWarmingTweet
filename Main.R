@@ -127,18 +127,35 @@ lapply(
   geom_tile(aes(event, author_username), col = "white")
 dev.off()
 
+# Distribution of the event number that higher centrality users has impacts on. 
+tar_load(author_attr)
+
 # Distribution of participate number of high-degree-centrality users. 
 # Bug: Here I use author_username to group the data because that we can understand the tile plot easier, but it should be done with userid rather than author_username because a userid may have multiple author_username. 
 degree_user_event_num <- lapply(
   names(top_degree), 
   function(x) {
     mutate(top_degree[[x]], event = x, .before = 1) %>% 
-      select(event, author_username)
+      select(event, userid)
   }
 ) %>% 
   bind_rows() %>% 
-  group_by(author_username) %>% 
-  summarise(n_event = n(), .groups = "drop")
+  group_by(userid) %>% 
+  summarise(n_event = n(), .groups = "drop") %>% 
+  arrange(-n_event) %>% 
+  left_join(
+    author_attr %>% 
+      group_by(author_id) %>% 
+      summarise(
+        author_username = 
+          paste(unique(author_username), collapse = "----"), 
+        author_name = 
+          paste(unique(author_name), collapse = "----"), 
+        author_description = 
+          paste(unique(author_description), collapse = "----")
+      ), 
+    by = c("userid" = "author_id")
+  )
 ggplot(degree_user_event_num) + 
   geom_histogram(aes(n_event)) + 
   scale_x_continuous(labels = scales::label_number(accuracy = 1))
@@ -150,12 +167,26 @@ between_user_event_num <- lapply(
   names(top_between), 
   function(x) {
     mutate(top_between[[x]], event = x, .before = 1) %>% 
-      select(event, author_username)
+      select(event, userid)
   }
 ) %>% 
   bind_rows() %>% 
-  group_by(author_username) %>% 
-  summarise(n_event = n(), .groups = "drop")
+  group_by(userid) %>% 
+  summarise(n_event = n(), .groups = "drop") %>% 
+  arrange(-n_event) %>% 
+  left_join(
+    author_attr %>% 
+      group_by(author_id) %>% 
+      summarise(
+        author_username = 
+          paste(unique(author_username), collapse = "----"), 
+        author_name = 
+          paste(unique(author_name), collapse = "----"), 
+        author_description = 
+          paste(unique(author_description), collapse = "----")
+      ), 
+    by = c("userid" = "author_id")
+  )
 ggplot(between_user_event_num) + 
   geom_histogram(aes(n_event))
 write.csv(between_user_event_num, "data_proc/between_user_event_num.csv")
