@@ -1,13 +1,14 @@
-# 加载包。
+# Preparation ----
 library(dplyr)
 library(stringr)
 library(readr)
 library(tidyr)
 
+# Extract data ----
 # 函数：用于从手动下载的每月的新闻文本中提取所需数据。
-extract_news_data <- function(dir_x) {
+extract_news_data <- function(file_x) {
   # 读取文档内容。
-  res <- read_file(dir_x) 
+  res <- read_file(paste0("data_raw/txt/", file_x)) 
   # 构建结果数据框。
   res <- 
     # 按照文章分割文本。
@@ -36,7 +37,12 @@ extract_news_data <- function(dir_x) {
 }
 
 # 转化提取并导出结果。
-lapply(
-  paste0("data_raw/", c("hs201201.txt", "hs201202.txt", "hs201203.txt")), 
-  function(x) extract_news_data(x) %>% write.csv(gsub("txt", "csv", x))
-)
+list.files("data_raw/txt/") %>% 
+  lapply(
+    ., 
+    function(x) {
+      extract_news_data(x) %>% 
+        write.csv(paste0("data_proc/csv/", gsub("txt", "csv", x)))
+    }
+  )
+
