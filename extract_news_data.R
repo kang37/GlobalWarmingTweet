@@ -1,8 +1,9 @@
 # Preparation ----
-library(dplyr)
-library(stringr)
 library(readr)
+library(stringr)
+library(dplyr)
 library(tidyr)
+library(ggplot2)
 
 # Extract data ----
 # 函数：用于从手动下载的每月的新闻文本中提取所需数据。
@@ -46,3 +47,30 @@ list.files("data_raw/txt/") %>%
     }
   )
 
+# Analysis ----
+# 构建分析数据。
+ash <- list.files("data_raw/txt/") %>% 
+  lapply(., function(x) extract_news_data(x)) %>% 
+  bind_rows() %>% 
+  mutate(year = substr(date, 1, 4), month = substr(date, 6, 7)) %>% 
+  filter(!is.na(no)) %>% 
+  # Bug: Remove 2012 data for now. 
+  filter(year != "2012")
+
+# 每年新闻数量变化。
+ash %>% 
+  group_by(year) %>% 
+  summarise(n = n(), .groups = "drop") %>% 
+  ggplot() + 
+  geom_col(aes(year, n)) + 
+  labs(x = NULL, y = "Tweet number") + 
+  theme_bw()
+
+# 每个月新闻数量变化。
+ash %>% 
+  group_by(year, month) %>% 
+  summarise(n = n(), .groups = "drop") %>% 
+  ggplot() + 
+  geom_line(aes(month, n, col = year, group = year)) + 
+  labs(x = "Month", y = "Tweet number", col = "Year") + 
+  theme_bw()
