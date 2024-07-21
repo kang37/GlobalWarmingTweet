@@ -79,7 +79,16 @@ ash %>%
   summarise(n = n(), .groups = "drop") %>% 
   ggplot() + 
   geom_line(aes(month, n, col = year, group = year)) + 
-  labs(x = "Month", y = "Tweet number", col = "Year") + 
+  labs(x = "Month", y = "News number", col = "Year") + 
+  theme_bw()
+
+# 每个月字数变化。
+ash %>% 
+  group_by(year, month) %>% 
+  summarise(char_count = sum(char_count), .groups = "drop") %>% 
+  ggplot() + 
+  geom_line(aes(month, char_count, col = year, group = year)) + 
+  labs(x = "Month", y = "News character number", col = "Year") + 
   theme_bw()
 
 # Text mining data ----
@@ -151,7 +160,7 @@ quan_test_k_topic <- function(k_x) {
 }
 # 测试主题数量思路：如果区分度越高的话，一个文档被划分到各个主题下的概率就越离散，基尼系数就越高。所以，可以给定一定范围的自定义主题数量，计算不同主题数量下，各个文档被划分到各个主题中的概率。看在那个自定义主题数量下，平均基尼系数最高，或者看看基尼系数在什么时候突变。
 # 要测试的自定义主题数量范围。
-range_k <- 2:4
+range_k <- 2:8
 # 存储测试结果。
 quan_id_topic_test <- 
   lapply(range_k, quan_test_k_topic) %>% 
@@ -195,6 +204,9 @@ ggplot(quan_gini_chg_rate) +
     pull(k)
 )
 
+# Bug: 手动选择主题数量。
+quan_tar_k <- 8
+
 # 构建LDA数据。
 quan_lda <- LDA(quan_dtm_tm, k = quan_tar_k, control = list(seed = 1234))
 
@@ -237,7 +249,7 @@ quan_id_topic %>%
     mutate(term = gsub("_", "", term), term = gsub("[0-9]", "", term))
 )
 # 导出结果。
-write.xlsx(
+openxlsx::write.xlsx(
   topic_word, 
   paste0("data_proc/topic_word_", format(Sys.Date(), "%Y%m%d"), ".xlsx")
 )
