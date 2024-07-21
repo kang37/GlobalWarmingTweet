@@ -265,7 +265,7 @@ topic_text <- quan_id_topic %>%
     ash %>% 
       rename(text_content = text) %>% 
       left_join(rename(text_id, text_id = text), by = "id"), 
-    by = c("text" = "text_id")
+    by = c("text" = "text_id", "id")
   ) %>% 
   select(id, topic, gamma, text, text_content) 
 View(topic_text)
