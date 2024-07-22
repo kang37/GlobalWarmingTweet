@@ -375,7 +375,7 @@ tw_id_topic %>%
   facet_wrap(.~ topic)
 
 # 推特条数和新闻字数的相关性。
-news_mth_n_char <- left_join(
+mth_twnum_newschar <- left_join(
   ash %>% 
     group_by(year, month) %>% 
     summarise(char_count = sum(char_count), .groups = "drop") %>% 
@@ -386,9 +386,28 @@ news_mth_n_char <- left_join(
     summarise(tw_num = sum(tw_num), .groups = "drop"), 
   by = c("year", "month")
 )
-news_mth_n_char %>% 
+mth_twnum_newschar %>% 
   ggplot() + 
   geom_point(aes(char_count, tw_num, col = as.character(year)), alpha = 0.7) + 
   labs(x = "News number", y = "Character count", col = "Year") + 
   theme_bw()
-cor.test(news_mth_n_char$tw_num, news_mth_n_char$char_count)
+cor.test(mth_twnum_newschar$tw_num, mth_twnum_newschar$char_count)
+
+# 推文条数和新闻篇数相关。
+mth_twnum_newsnum <- left_join(
+  ash %>% 
+    group_by(year, month) %>% 
+    summarise(news_num = n(), .groups = "drop") %>% 
+    mutate(year = as.numeric(year), month = as.numeric(month)), 
+  general_plot_dt %>% 
+    mutate(year = year(date), month = month(date)) %>% 
+    group_by(year, month) %>% 
+    summarise(tw_num = sum(tw_num), .groups = "drop"), 
+  by = c("year", "month")
+)
+mth_twnum_newsnum %>% 
+  ggplot() + 
+  geom_point(aes(news_num, tw_num, col = as.character(year)), alpha = 0.7) + 
+  labs(x = "News number", y = "Tweet number", col = "Year") + 
+  theme_bw()
+cor.test(mth_twnum_newsnum$tw_num, mth_twnum_newsnum$news_num)
