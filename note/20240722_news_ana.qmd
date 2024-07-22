@@ -183,3 +183,15 @@ ggplot(lss_score_smooth) +
   geom_ribbon(aes(x = date, ymin = fit - se, ymax = fit + se), alpha = 0.2) + 
   theme_bw()
 ```
+
+**推文的情感分析明天看时间吧。**
+
+## 新闻-推文相互影响
+
+```{r}
+# 函数的输入变量中，前者为新闻主题编号，后者为推文主题编号。
+get_var_res(1, 1)
+get_var_res(2, 3)
+get_var_res(5, 5)
+get_var_res(4, 2)
+```
