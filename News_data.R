@@ -88,6 +88,23 @@ ash %>%
   labs(x = "Month", y = "News character number", col = "Year") + 
   theme_bw()
 
+# 条数和字数的相关性。
+news_mth_n_char <- left_join(
+  ash %>% 
+    group_by(year, month) %>% 
+    summarise(char_count = sum(char_count), .groups = "drop"), 
+  ash %>% 
+    group_by(year, month) %>% 
+    summarise(n = n(), .groups = "drop"), 
+  by = c("year", "month")
+)
+news_mth_n_char %>% 
+  ggplot() + 
+  geom_point(aes(char_count, n, col = year), alpha = 0.7) + 
+  labs(x = "News number", y = "Character count") + 
+  theme_bw()
+cor.test(news_mth_n_char$n, news_mth_n_char$char_count)
+
 # Text mining data ----
 # 停止词：在分词之后去除的不重要的日语词汇。
 jp_stop_word <- tibble(
@@ -315,6 +332,7 @@ lss <-
 # 词语极性。
 textplot_terms(lss)
 
+# 情感得分。
 lss_score <- 
   docvars(quan_dtm) %>% 
   mutate(fit = predict(lss, newdata = quan_dtm))
@@ -335,4 +353,3 @@ ggplot(lss_score_smooth) +
   geom_line(aes(date, fit)) + 
   geom_ribbon(aes(x = date, ymin = fit - se, ymax = fit + se), alpha = 0.2) + 
   theme_bw()
-
