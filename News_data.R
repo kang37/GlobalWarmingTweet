@@ -286,3 +286,53 @@ quan_id_topic %>%
   ggplot() + 
   geom_line(aes(date, gamma_score, col = as.character(topic), group = topic)) + 
   facet_wrap(.~ topic)
+
+# LSS ----
+# Seed words for LSS model. 
+seed_word <- 
+  c(rep(1, 12), rep(-1, 11)) %>% 
+  setNames(c(
+    c("恵み", "絶賛", "創出", "改善", "配慮", 
+      "対話", "効果的", "支持", "機会", "成功",  
+      "効果", "成功例"), 
+    c("破壊", "危険", "壊滅", "被害", "貧相", 
+      "酷評", "悪徳", 
+      "危険性", "壊滅的", "農業被害", "豪雨被害")
+  ))
+
+context_word <- char_context(quan_tok, "温暖化", p = 0.05)
+
+# LSS model. 
+lss <- 
+  textmodel_lss(
+    quan_dtm, 
+    seeds = seed_word, 
+    # terms = context_word, 
+    k = 300, 
+    include_data = TRUE, 
+    group_data = TRUE
+  )
+# 词语极性。
+textplot_terms(lss)
+
+lss_score <- 
+  docvars(quan_dtm) %>% 
+  mutate(fit = predict(lss, newdata = quan_dtm))
+
+lss_score_smooth <- 
+  lss_score %>% 
+  mutate(
+    year = substr(date, 1, 4), 
+    month = substr(date, 6, 7) %>% as.numeric(), 
+    day = substr(date, 9, 10), 
+    date = as_date(paste(year, month, day, sep = "-"))
+  ) %>% 
+  select(date, fit) %>% 
+  smooth_lss(., engine = "locfit", span = 0.2) %>% 
+  rename("se" = "se.fit")
+
+ggplot(lss_score_smooth) + 
+  geom_line(aes(date, fit)) + 
+  geom_ribbon(aes(x = date, ymin = fit - se, ymax = fit + se), alpha = 0.2) + 
+  theme_bw()
+
