@@ -108,7 +108,9 @@ jp_stop_word <- tibble(
 quan_jp_stop_word <- jp_stop_word$word
 
 # Corpus. 
-quan_corp <- corpus(ash, text_field = "text")
+quan_corp <- ash %>% 
+  filter(year == "2021", as.numeric(month) >= 9) %>% 
+  corpus(., text_field = "text")
 
 # 自定义词典。
 quan_dict <- 
