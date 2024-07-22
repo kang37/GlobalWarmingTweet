@@ -229,7 +229,7 @@ list(
       # Bug: Why there are empty term?
       filter(term != "") %>% 
       group_by(topic) %>% 
-      slice_max(beta, n = 30) %>% 
+      slice_max(beta, n = 100) %>% 
       mutate(term = reorder_within(term, beta, topic)) %>% 
       summarise(term = list(term), .groups = "drop") %>% 
       mutate(
