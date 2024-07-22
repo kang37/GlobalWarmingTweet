@@ -413,3 +413,33 @@ mth_twnum_newsnum %>%
   labs(x = "News number", y = "Tweet number", col = "Year") + 
   theme_bw()
 cor.test(mth_twnum_newsnum$tw_num, mth_twnum_newsnum$news_num)
+
+# 全时间段两种数据条数的变化对比。
+mth_twnum_newsnum %>% 
+  mutate(
+    year_month = paste(year, month, sep = "-"), 
+    year_month = factor(year_month, levels = year_month), 
+    tw_num = tw_num / 10000
+  ) %>% 
+  pivot_longer(
+    cols = c(tw_num, news_num), names_to = "source", values_to = "num"
+  ) %>% 
+  ggplot() + 
+  geom_line(aes(year_month, num, group = 1)) + 
+  labs(x = NULL, y = NULL) + 
+  facet_wrap(
+    .~ source, labeller = labeller(
+      source = c("Asahi Report Number", "Tweet Number (x 10000)") %>% 
+        setNames(c("news_num", "tw_num"))
+    ), 
+    ncol = 1, scales = "free_y"
+  ) + 
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90)) + 
+  scale_x_discrete(
+    breaks = paste(
+      rep(c(2018:2022), each = 4), 
+      rep(sprintf("%02i", c(1, 4, 7, 10)), 4), 
+      sep = "-"
+    )
+  )
