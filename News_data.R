@@ -353,3 +353,40 @@ ggplot(lss_score_smooth) +
   geom_line(aes(date, fit)) + 
   geom_ribbon(aes(x = date, ymin = fit - se, ymax = fit + se), alpha = 0.2) + 
   theme_bw()
+
+# Twitter comparison ----
+# 加载数据。
+library(targets)
+tar_make()
+tar_load(general_plot_dt)
+tar_load(dtm_2022)
+tar_load(lda_2022)
+tar_load(topic_word_2022)
+
+# 推文每月数量变化。
+general_plot_dt %>% 
+  mutate(year = year(date), month = month(date)) %>% 
+  group_by(year, month) %>% 
+  summarise(tw_num = sum(tw_num), .groups = "drop") %>% 
+  ggplot() + 
+  geom_line(aes(month, tw_num, col = as.character(year), group = year)) + 
+  labs(x = "Month", y = "Tweet number", col = "Year") + 
+  theme_bw()
+
+tw_id_topic <- tidy(lda_2022, matrix = "gamma") %>% 
+  rename(text = document) %>% 
+  # Bug: 这里的对应关系是否正确？
+  mutate(
+    id = rep(docvars(dtm_2022)$id, 8), 
+    date = rep(docvars(dtm_2022)$date, 8)
+  )
+
+# 各个话题的显著度变化。
+tw_id_topic %>% 
+  group_by(date, topic) %>% 
+  summarise(gamma = sum(gamma), .groups = "drop") %>% 
+  group_by(date) %>% 
+  mutate(tot_gamma = sum(gamma), gamma_score = gamma / tot_gamma) %>% 
+  ggplot() + 
+  geom_line(aes(date, gamma_score, col = as.character(topic), group = topic)) + 
+  facet_wrap(.~ topic)
