@@ -215,7 +215,7 @@ list(
   ), 
   # Target topic number. 
   tar_target(
-    tar_k, 8
+    tar_k, 6
   ), 
   # LDA. 
   tar_target(

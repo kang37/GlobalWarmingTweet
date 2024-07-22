@@ -174,52 +174,52 @@ quan_test_k_topic <- function(k_x) {
 }
 # 测试主题数量思路：如果区分度越高的话，一个文档被划分到各个主题下的概率就越离散，基尼系数就越高。所以，可以给定一定范围的自定义主题数量，计算不同主题数量下，各个文档被划分到各个主题中的概率。看在那个自定义主题数量下，平均基尼系数最高，或者看看基尼系数在什么时候突变。
 # 要测试的自定义主题数量范围。
-range_k <- 2:8
+# range_k <- 2:8
 # 存储测试结果。
-quan_id_topic_test <- 
-  lapply(range_k, quan_test_k_topic) %>% 
-  setNames(as.character(range_k)) %>% 
-  bind_rows() %>% 
-  left_join(text_id, by = c("document" = "text"))
+# quan_id_topic_test <- 
+#   lapply(range_k, quan_test_k_topic) %>% 
+#   setNames(as.character(range_k)) %>% 
+#   bind_rows() %>% 
+#   left_join(text_id, by = c("document" = "text"))
 # 计算基尼系数之前，先直观观察不同主题下文档主题划分的区分度。如果区分度越高，格子之间的颜色差异就越明显。
-quan_id_topic_test %>% 
-  bind_rows() %>% 
-  ggplot() + 
-  geom_tile(aes(document, as.integer(topic), fill = gamma)) + 
-  scale_fill_gradient(high = "red", low = "green") + 
-  theme(axis.text.x = element_blank()) + 
-  facet_wrap(.~ k, scales = "free_y")
+# quan_id_topic_test %>% 
+#   bind_rows() %>% 
+#   ggplot() + 
+#   geom_tile(aes(document, as.integer(topic), fill = gamma)) + 
+#   scale_fill_gradient(high = "red", low = "green") + 
+#   theme(axis.text.x = element_blank()) + 
+#   facet_wrap(.~ k, scales = "free_y")
 # 计算基尼系数并比较不同自定义主题数量下基尼系数的差异。
-quan_id_topic_test %>% 
-  group_by(k, document) %>% 
-  summarise(gini = Gini(gamma), .groups = "drop") %>% 
-  mutate(k = factor(k, levels = as.character(range_k))) %>% 
-  ggplot() + 
-  geom_boxplot(aes(k, gini), alpha = 0.5) + 
-  theme_bw() + 
-  labs(x = "Topic number", y = "Gini")
+# quan_id_topic_test %>% 
+#   group_by(k, document) %>% 
+#   summarise(gini = Gini(gamma), .groups = "drop") %>% 
+#   mutate(k = factor(k, levels = as.character(range_k))) %>% 
+#   ggplot() + 
+#   geom_boxplot(aes(k, gini), alpha = 0.5) + 
+#   theme_bw() + 
+#   labs(x = "Topic number", y = "Gini")
 
 # 正式进行主题模型分析。
 # 获得测试范围内的最佳自定义主题数量：基尼系数最大，区分度最高。
 # 计算突变点：平均基尼系数突然增加的点对应的主题数，就是目标主题数。
-quan_gini_chg_rate <- quan_id_topic_test %>% 
-  group_by(k, document) %>% 
-  summarise(gini = Gini(gamma), .groups = "drop") %>% 
-  group_by(k) %>% 
-  summarise(gini = mean(gini), .groups = "drop") %>% 
-  mutate(
-    gini_lag = lag(gini), gini_mean_chg_rate = (gini - gini_lag) / gini_lag
-  )
-ggplot(quan_gini_chg_rate) + 
-  geom_point(aes(k, gini_mean_chg_rate))
-(
-  quan_tar_k <- quan_gini_chg_rate %>% 
-    filter(gini_mean_chg_rate == max(gini_mean_chg_rate, na.rm = TRUE)) %>% 
-    pull(k)
-)
+# quan_gini_chg_rate <- quan_id_topic_test %>% 
+#   group_by(k, document) %>% 
+#   summarise(gini = Gini(gamma), .groups = "drop") %>% 
+#   group_by(k) %>% 
+#   summarise(gini = mean(gini), .groups = "drop") %>% 
+#   mutate(
+#     gini_lag = lag(gini), gini_mean_chg_rate = (gini - gini_lag) / gini_lag
+#   )
+# ggplot(quan_gini_chg_rate) + 
+#   geom_point(aes(k, gini_mean_chg_rate))
+# (
+#   quan_tar_k <- quan_gini_chg_rate %>% 
+#     filter(gini_mean_chg_rate == max(gini_mean_chg_rate, na.rm = TRUE)) %>% 
+#     pull(k)
+# )
 
 # Bug: 手动选择主题数量。
-quan_tar_k <- 8
+quan_tar_k <- 6
 
 # 构建LDA数据。
 quan_lda <- LDA(quan_dtm_tm, k = quan_tar_k, control = list(seed = 1234))
@@ -377,8 +377,8 @@ tw_id_topic <- tidy(lda_2022, matrix = "gamma") %>%
   rename(text = document) %>% 
   # Bug: 这里的对应关系是否正确？
   mutate(
-    id = rep(docvars(dtm_2022)$id, 8), 
-    date = rep(docvars(dtm_2022)$date, 8)
+    id = rep(docvars(dtm_2022)$id, 6), 
+    date = rep(docvars(dtm_2022)$date, 6)
   )
 
 # 各个话题的显著度变化。
