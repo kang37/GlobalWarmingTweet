@@ -270,7 +270,7 @@ topic_text <- quan_id_topic %>%
   mutate(text_content = substr(text_content, 1, 400))
 View(topic_text)
 
-# 2022年1-6月每天各主题显著度变化。
+# 2021年9-12月每天各主题显著度变化。
 quan_id_topic %>% 
   mutate(
     year = substr(date, 1, 4), 
@@ -278,7 +278,7 @@ quan_id_topic %>%
     day = substr(date, 9, 10), 
     date = as_date(paste(year, month, day, sep = "-"))
   ) %>% 
-  filter(year == "2022", month <= 6) %>% 
+  filter(year == "2021", month >= 9) %>% 
   group_by(date, topic) %>% 
   summarise(gamma = sum(gamma), .groups = "drop") %>% 
   group_by(date) %>% 
@@ -342,9 +342,9 @@ ggplot(lss_score_smooth) +
 library(targets)
 tar_make()
 tar_load(general_plot_dt)
-tar_load(dtm_2022)
-tar_load(lda_2022)
-tar_load(topic_word_2022)
+tar_load(dtm_2021)
+tar_load(lda_2021)
+tar_load(topic_word_2021)
 
 # 推文每月数量变化。
 general_plot_dt %>% 
@@ -356,12 +356,12 @@ general_plot_dt %>%
   labs(x = "Month", y = "Tweet number", col = "Year") + 
   theme_bw()
 
-tw_id_topic <- tidy(lda_2022, matrix = "gamma") %>% 
+tw_id_topic <- tidy(lda_2021, matrix = "gamma") %>% 
   rename(text = document) %>% 
   # Bug: 这里的对应关系是否正确？
   mutate(
-    id = rep(docvars(dtm_2022)$id, 6), 
-    date = rep(docvars(dtm_2022)$date, 6)
+    id = rep(docvars(dtm_2021)$id, 6), 
+    date = rep(docvars(dtm_2021)$date, 6)
   )
 
 # 各个话题的显著度变化。
