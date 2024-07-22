@@ -177,7 +177,7 @@ list(
   tar_target(
     corp_2022, 
     csv %>% 
-      filter(year == "2022", month <= 6) %>% 
+      filter(year == "2021", month >= 9) %>% 
       group_by(month) %>% 
       slice_sample(n = 1000) %>% 
       ungroup() %>% 
