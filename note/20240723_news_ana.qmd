@@ -184,7 +184,15 @@ ggplot(lss_score_smooth) +
   theme_bw()
 ```
 
-**推文的情感分析明天看时间吧。**
+推文：
+
+```{r}
+textplot_terms(lss_tw)
+ggplot(lss_score_smooth_tw) + 
+  geom_line(aes(date, fit)) + 
+  geom_ribbon(aes(x = date, ymin = fit - se, ymax = fit + se), alpha = 0.2) + 
+  theme_bw()
+```
 
 ## 新闻-推文相互影响
 
