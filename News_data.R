@@ -443,3 +443,63 @@ mth_twnum_newsnum %>%
       sep = "-"
     )
   )
+
+# Impact between Twitter and news ----
+# 对相同主题，用VAR分析新闻和推文之间的相互影响。
+get_var_res <- function(news_topic_id, tw_topic_id) {
+  # Get target data. 
+  tw_topic_signal <- tw_id_topic %>% 
+    group_by(date, topic) %>% 
+    summarise(gamma = sum(gamma), .groups = "drop") %>% 
+    group_by(date) %>% 
+    mutate(tot_gamma = sum(gamma), gamma_score = gamma / tot_gamma) %>% 
+    ungroup()
+  news_topic_signal <- quan_id_topic %>% 
+    mutate(
+      year = substr(date, 1, 4), 
+      month = substr(date, 6, 7) %>% as.numeric(), 
+      day = substr(date, 9, 10), 
+      date = as_date(paste(year, month, day, sep = "-"))
+    ) %>% 
+    filter(year == "2021", month >= 9) %>% 
+    group_by(date, topic) %>% 
+    summarise(gamma = sum(gamma), .groups = "drop") %>% 
+    group_by(date) %>% 
+    mutate(tot_gamma = sum(gamma), gamma_score = gamma / tot_gamma) %>% 
+    ungroup()
+  data_sub <- left_join(
+    tw_topic_signal %>% 
+      filter(topic == tw_topic_id) %>% 
+      dplyr::select(date, gamma_score) %>% 
+      rename("tw" = "gamma_score"), 
+    news_topic_signal %>% 
+      filter(topic == news_topic_id) %>% 
+      dplyr::select(date, gamma_score) %>% 
+      rename(news = gamma_score), 
+    by = "date"
+  ) %>% 
+    arrange(date) %>% 
+    dplyr::select(-date) %>% 
+    filter(!is.na(tw), !is.na(news))
+  
+  # Perform lag selection
+  lag_selection <- VARselect(data_sub, lag.max = 5, type = "const")
+  # print(lag_selection$selection)
+  # Fit the VAR model.
+  var_model <- VAR(data_sub, p = lag_selection$selection[1], type = "const")
+  # Summary of the VAR model.
+  var_model_smry <- summary(var_model)
+  
+  # Forecast using the VAR model.
+  forecast <- predict(var_model, n.ahead = 30)
+  # Plot the forecast. 
+  plot(forecast)
+  
+  # Get result. 
+  return(var_model_smry)
+}
+# 函数的输入变量中，前者为新闻主题编号，后者为推文主题编号。
+get_var_res(1, 1)
+get_var_res(2, 3)
+get_var_res(5, 5)
+get_var_res(4, 2)
