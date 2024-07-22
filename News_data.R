@@ -1,7 +1,7 @@
 # Preparation ----
 pacman::p_load(
-  readr, stringr, DescTools, dplyr, tidyr, stopwords, topicmodels, tidytext, 
-  quanteda, quanteda.textstats, LSX, ggplot2, showtext
+  readr, stringr, lubridate, DescTools, dplyr, tidyr, stopwords, topicmodels,
+  tidytext, quanteda, quanteda.textstats, LSX, ggplot2, showtext
 )
 showtext_auto()
 
@@ -56,10 +56,7 @@ ash <- list.files("data_raw/txt/") %>%
   filter(!is.na(no)) %>% 
   # Bug: Remove 2012 data for now. 
   filter(year != "2012") %>% 
-  mutate(id = paste(
-    docvars(quan_tok)$year, docvars(quan_tok)$month, docvars(quan_tok)$no, 
-    sep = "-"
-  )) %>% 
+  mutate(id = paste(year, month, no, sep = "-")) %>% 
   # Remove duplicated entries. 
   mutate(dup = duplicated(id)) %>% 
   filter(!dup)
@@ -224,7 +221,8 @@ quan_id_topic <- tidy(quan_lda, matrix = "gamma") %>%
     gini <= quantile(gini, 2/3) ~ "2", 
     gini <= quantile(gini, 3/3) ~ "3"
   )) %>% 
-  left_join(text_id, by = "text")
+  left_join(text_id, by = "text") %>% 
+  left_join(ash %>% select(id, date), by = "id")
 # 基尼系数越高的组，概率越离散。
 quan_id_topic %>% 
   ggplot() + 
@@ -258,7 +256,7 @@ openxlsx::write.xlsx(
 topic_text <- quan_id_topic %>% 
   group_by(topic) %>% 
   arrange(topic, -gamma) %>% 
-  slice_head(n = 10) %>% 
+  slice_head(n = 5) %>% 
   ungroup() %>% 
   # 漏洞：需要提前更改id的类型。
   left_join(
@@ -267,5 +265,24 @@ topic_text <- quan_id_topic %>%
       left_join(rename(text_id, text_id = text), by = "id"), 
     by = c("text" = "text_id", "id")
   ) %>% 
-  select(id, topic, gamma, text, text_content) 
+  select(id, topic, gamma, headline, text, text_content) %>% 
+  # 选取每篇文章正文内容的前400个字。
+  mutate(text_content = substr(text_content, 1, 400))
 View(topic_text)
+
+# 每天各主题显著度变化。
+quan_id_topic %>% 
+  mutate(
+    year = substr(date, 1, 4), 
+    month = substr(date, 6, 7) %>% as.numeric(), 
+    day = substr(date, 9, 10), 
+    date = as_date(paste(year, month, day, sep = "-"))
+  ) %>% 
+  filter(year == "2022", month <= 6) %>% 
+  group_by(date, topic) %>% 
+  summarise(gamma = sum(gamma), .groups = "drop") %>% 
+  group_by(date) %>% 
+  mutate(tot_gamma = sum(gamma), gamma_score = gamma / tot_gamma) %>% 
+  ggplot() + 
+  geom_line(aes(date, gamma_score, col = as.character(topic), group = topic)) + 
+  facet_wrap(.~ topic)
