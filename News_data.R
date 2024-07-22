@@ -270,7 +270,7 @@ topic_text <- quan_id_topic %>%
   mutate(text_content = substr(text_content, 1, 400))
 View(topic_text)
 
-# 每天各主题显著度变化。
+# 2022年1-6月每天各主题显著度变化。
 quan_id_topic %>% 
   mutate(
     year = substr(date, 1, 4), 
