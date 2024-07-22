@@ -88,23 +88,6 @@ ash %>%
   labs(x = "Month", y = "News character number", col = "Year") + 
   theme_bw()
 
-# 条数和字数的相关性。
-news_mth_n_char <- left_join(
-  ash %>% 
-    group_by(year, month) %>% 
-    summarise(char_count = sum(char_count), .groups = "drop"), 
-  ash %>% 
-    group_by(year, month) %>% 
-    summarise(n = n(), .groups = "drop"), 
-  by = c("year", "month")
-)
-news_mth_n_char %>% 
-  ggplot() + 
-  geom_point(aes(char_count, n, col = year), alpha = 0.7) + 
-  labs(x = "News number", y = "Character count") + 
-  theme_bw()
-cor.test(news_mth_n_char$n, news_mth_n_char$char_count)
-
 # Text mining data ----
 # 停止词：在分词之后去除的不重要的日语词汇。
 jp_stop_word <- tibble(
@@ -390,3 +373,22 @@ tw_id_topic %>%
   ggplot() + 
   geom_line(aes(date, gamma_score, col = as.character(topic), group = topic)) + 
   facet_wrap(.~ topic)
+
+# 推特条数和新闻字数的相关性。
+news_mth_n_char <- left_join(
+  ash %>% 
+    group_by(year, month) %>% 
+    summarise(char_count = sum(char_count), .groups = "drop") %>% 
+    mutate(year = as.numeric(year), month = as.numeric(month)), 
+  general_plot_dt %>% 
+    mutate(year = year(date), month = month(date)) %>% 
+    group_by(year, month) %>% 
+    summarise(tw_num = sum(tw_num), .groups = "drop"), 
+  by = c("year", "month")
+)
+news_mth_n_char %>% 
+  ggplot() + 
+  geom_point(aes(char_count, tw_num, col = as.character(year)), alpha = 0.7) + 
+  labs(x = "News number", y = "Character count", col = "Year") + 
+  theme_bw()
+cor.test(news_mth_n_char$tw_num, news_mth_n_char$char_count)
