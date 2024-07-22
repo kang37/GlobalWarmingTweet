@@ -175,7 +175,7 @@ list(
   ), 
   # Make corpus. 
   tar_target(
-    corp_2022, 
+    corp_2021, 
     csv %>% 
       filter(year == "2021", month >= 9) %>% 
       group_by(month) %>% 
@@ -185,9 +185,9 @@ list(
   ), 
   # Tokenization. 
   tar_target(
-    tok_2022, 
+    tok_2021, 
     tokens(
-      corp_2022, 
+      corp_2021, 
       remove_symbols = TRUE, 
       remove_numbers = TRUE, 
       remove_url = TRUE, 
@@ -205,13 +205,13 @@ list(
   ), 
   # Document-term matrix. 
   tar_target(
-    dtm_2022, 
-    dfm(tok_2022)
+    dtm_2021, 
+    dfm(tok_2021)
   ), 
   # Document-term matrix in tm format. 
   tar_target(
-    dtm_tm_2022, 
-    quanteda::convert(dtm_2022, to = "tm")
+    dtm_tm_2021, 
+    quanteda::convert(dtm_2021, to = "tm")
   ), 
   # Target topic number. 
   tar_target(
@@ -219,13 +219,13 @@ list(
   ), 
   # LDA. 
   tar_target(
-    lda_2022, 
-    LDA(dtm_tm_2022, k = tar_k, control = list(seed = 1234))
+    lda_2021, 
+    LDA(dtm_tm_2021, k = tar_k, control = list(seed = 1234))
   ), 
   # Topic words. 
   tar_target(
-    topic_word_2022, 
-    tidy(lda_2022, matrix = "beta") %>% 
+    topic_word_2021, 
+    tidy(lda_2021, matrix = "beta") %>% 
       # Bug: Why there are empty term?
       filter(term != "") %>% 
       group_by(topic) %>% 
