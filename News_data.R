@@ -28,7 +28,7 @@ extract_news_data <- function(file_x) {
         unlist()
     ) %>% 
     separate(page_char, into = c("page", "char_count"), sep = ",") %>% 
-    select(-raw, -lines) %>% 
+    dplyr::select(-raw, -lines) %>% 
     mutate(
       page = as.numeric(gsub("ページ", "", page)), 
       char_count = as.numeric(gsub("文字", "", char_count))
@@ -224,7 +224,7 @@ quan_id_topic <- tidy(quan_lda, matrix = "gamma") %>%
     gini <= quantile(gini, 3/3) ~ "3"
   )) %>% 
   left_join(text_id, by = "text") %>% 
-  left_join(ash %>% select(id, date), by = "id")
+  left_join(ash %>% dplyr::select(id, date), by = "id")
 # 基尼系数越高的组，概率越离散。
 quan_id_topic %>% 
   ggplot() + 
@@ -267,7 +267,7 @@ topic_text <- quan_id_topic %>%
       left_join(rename(text_id, text_id = text), by = "id"), 
     by = c("text" = "text_id", "id")
   ) %>% 
-  select(id, topic, gamma, headline, text, text_content) %>% 
+  dplyr::select(id, topic, gamma, headline, text, text_content) %>% 
   # 选取每篇文章正文内容的前400个字。
   mutate(text_content = substr(text_content, 1, 400))
 View(topic_text)
@@ -290,6 +290,7 @@ quan_id_topic %>%
   facet_wrap(.~ topic)
 
 # LSS ----
+## For news ----
 # Seed words for LSS model. 
 seed_word <- 
   c(rep(1, 12), rep(-1, 11)) %>% 
@@ -330,11 +331,48 @@ lss_score_smooth <-
     day = substr(date, 9, 10), 
     date = as_date(paste(year, month, day, sep = "-"))
   ) %>% 
-  select(date, fit) %>% 
+  dplyr::select(date, fit) %>% 
   smooth_lss(., engine = "locfit", span = 0.2) %>% 
   rename("se" = "se.fit")
 
 ggplot(lss_score_smooth) + 
+  geom_line(aes(date, fit)) + 
+  geom_ribbon(aes(x = date, ymin = fit - se, ymax = fit + se), alpha = 0.2) + 
+  theme_bw()
+
+## For Twitter ----
+# LSS model. 
+tar_load(dtm_2021)
+lss_tw <- 
+  textmodel_lss(
+    dtm_2021, 
+    seeds = seed_word, 
+    # terms = context_word, 
+    k = 300, 
+    include_data = TRUE, 
+    group_data = TRUE
+  )
+# 词语极性。
+textplot_terms(lss_tw)
+
+# 情感得分。
+lss_score_tw <- 
+  docvars(dtm_2021) %>% 
+  mutate(fit = predict(lss_tw, newdata = dtm_2021))
+
+lss_score_smooth_tw <- 
+  lss_score_tw %>% 
+  mutate(
+    year = substr(date, 1, 4), 
+    month = substr(date, 6, 7) %>% as.numeric(), 
+    day = substr(date, 9, 10), 
+    date = as_date(paste(year, month, day, sep = "-"))
+  ) %>% 
+  dplyr::select(date, fit) %>% 
+  smooth_lss(., engine = "locfit", span = 0.2) %>% 
+  rename("se" = "se.fit")
+
+ggplot(lss_score_smooth_tw) + 
   geom_line(aes(date, fit)) + 
   geom_ribbon(aes(x = date, ymin = fit - se, ymax = fit + se), alpha = 0.2) + 
   theme_bw()
