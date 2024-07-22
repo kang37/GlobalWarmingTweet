@@ -1,0 +1,95 @@
+---
+title: "新闻分析"
+author: "Kang"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+## 概述
+
+主要任务：
+
+-   将新闻文本转换成csv文件。
+
+-   分析每年或每个月的数量变化。
+
+-   对所有文本进行主题分析，解读出文本涉及的若干主题。
+
+## 数量变化
+
+每年和每个月数量变化如下。
+
+```{r}
+# 每年新闻数量变化。
+ash %>% 
+  group_by(year) %>% 
+  summarise(n = n(), .groups = "drop") %>% 
+  ggplot() + 
+  geom_col(aes(year, n)) + 
+  labs(x = NULL, y = "Tweet number") + 
+  theme_bw()
+
+# 每个月新闻数量变化。
+ash %>% 
+  group_by(year, month) %>% 
+  summarise(n = n(), .groups = "drop") %>% 
+  ggplot() + 
+  geom_line(aes(month, n, col = year, group = year)) + 
+  labs(x = "Month", y = "Tweet number", col = "Year") + 
+  theme_bw()
+```
+
+## 主题分析
+
+文本分析的基本流程为：
+
+（1）先读取所有新闻（我们称每条新闻为"文档"）。
+
+（2）将每个文档进行分词。
+
+（3）去除停止词。
+
+（4）统计词语的频率，同时也可以计算词语的重要性（TF-IDF方法）。
+
+（5）用主题模型对各个文档进行归类，结果呈现为每个文档被划分到各个主题的概率，例如，如果我们希望所有文档被归入3个主题中，那么某个文档属于主题1、2、3的概率可能分别是0.8、0.1、0.1。
+
+用LDA方法对文本进行主题分析，需要先定义主题数量。如果主题数量很少，例如极端情况下（理论上并不合理），我们将所有文档只归入1个主题中，那么所有文档属于该主题的概率就是100%，这种主题划分就没有意义了；再往前一步，如果分成2个主题，如果文档之间有很好的区分度，那没有问题，但是也可能出现大部分文档归入两个主题的概率都差不多是50%，区分度不够高；反之，如果我们将n个文档归入将近n个主题，那每个文档肯定会有所属概率更高的主题类别，但是主题太多，归类的意义也就小了。因此，在定义主题数量的时候，我们希望尽量少，但是又有足够的区分度。
+
+此处使用的方法是：给定一个范围的主题数量，得出各种情况下，每个文档属于各个主题的概率；计算每个文档划入各个主题的概率的基尼系数，如果基尼系数越高，说明这些概率越离散，区分度越高，反之则说明区分度较差。例如，在主题数量为3的情况下，文档A属于3个主题的概率是0.8、0.1、0.1，则基尼系数为0.7，文档B的概率是0.5、0.3、0.2，则基尼系数为0.3，显然前者比后者区分度要高，因为它几乎是很确定地属于第一个文档。这样一来，我们就有主题数量从2到4情况下分类结果中各文档概率的基尼系数，将它们进行排序，从基尼系数高的主题数量中，选一个最小的主题数量即可。
+
+首先看看不同主题数量下，各个文档分属于不同主题的概率。下图中格子颜色表示概率，红色为高概率，绿色为低概率。如果某个子图中，一列中有非常红的红色和大量非常绿的绿色，就表示区分度很好；反之区分度较差。可见各图都是有比较清晰的鲜红色和鲜绿色，区分度都不错。
+
+```{r}
+quan_id_topic_test %>% 
+  bind_rows() %>% 
+  ggplot() + 
+  geom_tile(aes(document, as.integer(topic), fill = gamma)) + 
+  scale_fill_gradient(high = "red", low = "green") + 
+  theme(axis.text.x = element_blank()) + 
+  facet_wrap(.~ k, scales = "free_y")
+```
+
+放在盒形图中对比，几种种情况下基尼系数中位数都接近1了，而且也没有突变，所以分成2-8个主题都行。此处我们选择将其分成8个主题。
+
+```{r}
+quan_id_topic_test %>% 
+  group_by(k, document) %>% 
+  summarise(gini = Gini(gamma), .groups = "drop") %>% 
+  mutate(k = factor(k, levels = as.character(range_k))) %>% 
+  ggplot() + 
+  geom_boxplot(aes(k, gini), alpha = 0.5) + 
+  theme_bw() + 
+  labs(x = "Topic number", y = "Gini")
+```
+
+用LDA将文本分成8个主题，各个主题的关键词如下。可见还有些词需要合并或者去除。
+
+```{r}
+library(knitr)
+library(kableExtra)
+topic_word %>% 
+  kable() %>% 
+  kable_styling()
+```
